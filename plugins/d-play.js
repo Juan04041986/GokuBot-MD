@@ -1,76 +1,134 @@
-import fetch from "node-fetch"
+import axios from 'axios'
 import yts from 'yt-search'
+
+const MAX_BYTES = 400 * 1024 * 1024
+const MIN_BYTES = 20 * 1024
+const DOC_BYTES = 16 * 1024 * 1024
+const TIMEOUT_DESCARGA = 120000
+
+const limpiarNombre = (t) => (String(t || 'audio')).replace(/[\\/:*?\"<>|]/g, '').trim().slice(0, 80) || 'audio'
+
+const extraerLink = (d) => {
+    const c = d?.result?.download_url || d?.resultado?.download_url || d?.data?.download || d?.data?.dl ||
+        d?.result?.download || d?.download || d?.url || ''
+    return typeof c === 'string' && c.startsWith('http') ? c : ''
+}
+
+const descargar = async (url) => {
+    const res = await axios.get(url, {
+        responseType: 'arraybuffer',
+        timeout: TIMEOUT_DESCARGA,
+        maxContentLength: MAX_BYTES,
+        maxBodyLength: MAX_BYTES,
+        headers: { 'User-Agent': 'Mozilla/5.0' }
+    })
+    const buf = Buffer.from(res.data)
+    if (buf.length < MIN_BYTES) throw new Error('archivo muy pequeño')
+    const tipo = String(res.headers['content-type'] || '')
+    if (tipo.includes('text/html') || tipo.includes('application/json')) throw new Error('no es audio')
+    return buf
+}
+
+const pedirAudio = async (api) => {
+    const { data } = await axios.get(api, { timeout: 15000, headers: { 'User-Agent': 'Mozilla/5.0' } })
+    const link = extraerLink(data)
+    if (!link) throw new Error('sin enlace')
+    return descargar(link)
+}
+
+const pedirDorratz = async (videoUrl) => {
+    const api = `https://api.dorratz.com/v1/youtube?url=${encodeURIComponent(videoUrl)}&type=audio&quality=128`
+    const { data } = await axios.get(api, { timeout: 25000, headers: { 'User-Agent': 'Mozilla/5.0' } })
+    if (!data?.ok || !data?.data) throw new Error('dorratz sin resultado')
+    const candidatos = [
+        data.data.proxy ? `https://api.dorratz.com${data.data.proxy}` : '',
+        typeof data.data.download === 'string' ? data.data.download : ''
+    ].filter((l) => l.startsWith('http'))
+    let ultimo = new Error('dorratz sin enlaces')
+    for (const l of candidatos) {
+        try { return await descargar(l) } catch (e) { ultimo = e }
+    }
+    throw ultimo
+}
+
+const getAudio = async (videoUrl) => {
+    const enc = encodeURIComponent(videoUrl)
+    const apis = [
+        `https://api-gohan-v1.onrender.com/download/ytaudio?url=${enc}&download=true`,
+        `https://api-gohan-v1.onrender.com/download/ytaudio?url=${enc}`,
+        `https://api.delirius.online/download/ytmp3?url=${enc}`,
+        `https://api.ryuzei.xyz/download/ytmp3/v4?url=${enc}&quality=64`,
+        `https://api.starlights.uk/api/download/ytmp3?url=${enc}`
+    ]
+    let ultimo = null
+    for (let intento = 1; intento <= 2; intento++) {
+        const tareas = [...apis.map(pedirAudio), pedirDorratz(videoUrl)]
+        try {
+            return await Promise.any(tareas)
+        } catch (err) {
+            ultimo = err
+        }
+    }
+    const primerError = ultimo?.errors?.[0]?.message
+    throw new Error(`todas las APIs fallaron${primerError ? ': ' + primerError : ''}`)
+}
 
 let handler = async (m, { conn, text, usedPrefix, command }) => {
 if (!global.db.data.chats[m.chat]?.fDescargas && m.isGroup) {
 return conn.sendMessage(m.chat, { text: `*« 🐲 »*  Los comandos de *[ descargas ]* estan desactivados...` }, { quoted: m })
 }
 
-if (!text) {
-return conn.sendMessage(m.chat, { text: `🐲 *Ejemplo:*\n*${usedPrefix + command}* Ozuna Una Aventura` }, { quoted: m })
-}
+const query = text?.trim()
+if (!query) return conn.sendMessage(m.chat, { text: `ꕤ Ingresa nombre o link\n*${usedPrefix + command}* Ozuna Una Aventura` }, { quoted: m })
 
 try {
-await m.react('⏰')
-let videoData
-let videoUrl = text
+await m.react('🎧')
 
-if (/^(?:https?:\/\/)?(?:www\.|m\.|music\.)?youtu\.?be/.test(text)) {
-const videoId = text.match(/(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/watch\?.+&v=))([^&\n?#]+)/)?.[1]
-if (videoId) videoUrl = `https://www.youtube.com/watch?v=${videoId}`
-const searchResult = await yts({ videoId })
-videoData = searchResult.videos?.[0] || searchResult
+let video
+if (/^(?:https?:\/\/)?(?:www\.|m\.|music\.)?youtu\.?be/.test(query)) {
+  const videoId = query.match(/(?:youtu\.be\/|youtube\.com(?:\/embed\/|\/v\/|\/watch\?v=|\/watch\?.+&v=))([^&\n?#]+)/)?.[1]
+  const search = await yts({ videoId })
+  video = search.videos?.[0] || search
 } else {
-const search = await yts(text)
-if (!search.videos || search.videos.length === 0) {
-return conn.sendMessage(m.chat, { text: `❌ No se encontró nada para: ${text}` }, { quoted: m })
-}
-videoData = search.videos[0]
-videoUrl = videoData.url
+  const search = await yts(query)
+  video = search.videos?.[0]
 }
 
-await conn.sendMessage(m.chat, { text: `🐲 *Descargando audio...*\n> ${videoData?.title || 'Audio'}\n❒ *Autor:* ${videoData?.author?.name || 'Desconocido'}\n❒ *Duración:* ${videoData?.timestamp || '?'}` }, { quoted: m })
-
-// API GOHAN - AUDIO
-const apiUrl = `https://api-gohan-v1.onrender.com/download/ytaudio?url=${encodeURIComponent(videoUrl)}`
-const res = await fetch(apiUrl)
-const data = await res.json()
-console.log('Respuesta Gohan:', JSON.stringify(data)?.slice(0, 800))
-
-// El link viene en result.download_url
-let dl_url = data?.result?.download_url || data?.result?.url || data?.download_url || data?.url || data?.data?.download
-
-if (!dl_url) {
-return conn.sendMessage(m.chat, { text: `❌ La API de Gohan no devolvió el audio, intenta de nuevo.` }, { quoted: m })
+if (!video) {
+  await m.react('❌')
+  return conn.sendMessage(m.chat, { text: `❌ No encontré resultados para *${query}*` }, { quoted: m })
+}
+if (!video.seconds) {
+  await m.react('❌')
+  return conn.sendMessage(m.chat, { text: `❌ *${video.title}* es un directo (en vivo) y no se puede descargar. Busca otra versión.` }, { quoted: m })
 }
 
-let title = data?.result?.title || videoData?.title || 'audio'
-let cleanTitle = title.replace(/[^\w\s]/gi, '').trim().replace(/\s+/g, '_')
-let fileName = `${cleanTitle}.mp3`
+const videoUrl = `https://youtu.be/${video.videoId}`
+const titulo = limpiarNombre(video.title)
 
-// Descargamos el buffer para que WhatsApp lo reproduzca si o si
-let buffer
-try {
-  const audioRes = await fetch(dl_url)
-  buffer = Buffer.from(await audioRes.arrayBuffer())
-} catch {
-  buffer = null
-}
+const audio = await getAudio(videoUrl)
 
-if (buffer) {
-  await conn.sendMessage(m.chat, { audio: buffer, mimetype: 'audio/mpeg', fileName: fileName }, { quoted: m })
+const mb = (audio.length / (1024 * 1024)).toFixed(2)
+await conn.sendMessage(m.chat, {
+  image: { url: video.thumbnail },
+  caption: `*「✦」 ¡Descargando!*\n\n> ❀ Título » *${video.title}*\n\n> ✐ Canal » *${video.author?.name || 'Desconocido'}*\n> ⴵ Duración » *${video.timestamp || '?'}*\n> ❒ Tamaño » *${mb}MB*\n> 🜸 Link » _${videoUrl}_`
+}, { quoted: m }).catch(() => null)
+
+if (audio.length > DOC_BYTES) {
+  await conn.sendMessage(m.chat, { document: audio, mimetype: 'audio/mpeg', fileName: `${titulo}.mp3` }, { quoted: m })
 } else {
-  await conn.sendMessage(m.chat, { audio: { url: dl_url }, mimetype: 'audio/mpeg', fileName: fileName }, { quoted: m })
+  await conn.sendMessage(m.chat, { audio: audio, mimetype: 'audio/mpeg', fileName: `${titulo}.mp3`, ptt: false }, { quoted: m })
 }
 
 await m.react('✅')
 
-} catch (error) {
-console.error('Error en play:', error)
-await conn.sendMessage(m.chat, { text: `❌ Error: ${error.message}` }, { quoted: m })
+} catch (e) {
+console.log('[PLAY ERROR]', e?.message)
+await m.react('❌')
+await conn.sendMessage(m.chat, { text: `❌ Error al descargar, intenta de nuevo` }, { quoted: m })
 }
 }
 
-handler.command = ['play', 'play2', 'ytplay']
+handler.command = ['play', 'play2', 'ytplay', 'audio']
 handler.tags = ["descargas"]
 export default handler
