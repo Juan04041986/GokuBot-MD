@@ -1,76 +1,117 @@
 import { execSync } from 'child_process'
 
-// --- FIX PARA OWNER CON USERNAME / LID ---
 function isOwnerReal(m, conn) {
-  // Tu número, el del bot, y los del config
   let owners = global.owner || []
-  // Si tu config usa otro nombre, también lo lee
   if (global.config?.owner) owners = owners.concat(global.config.owner)
-
-  // Saca solo los números de los owners (sin @, sin +, sin espacios)
   let ownerNumbers = owners.map(v => {
     let n = Array.isArray(v) ? v[0] : v
     return String(n).replace(/[^0-9]/g, '')
   }).filter(Boolean)
-
-  // Saca tu número de donde venga: sender, participant, lid, etc
-  let myIds = [
-    m.sender,
-    m.key?.participant,
-    m.key?.remoteJid,
-    conn.user?.jid
-  ].filter(Boolean)
-
-  // Saca solo números de tus IDs
+  let myIds = [m.sender, m.key?.participant, m.key?.remoteJid, conn.user?.jid].filter(Boolean)
   let myNumbers = myIds.map(id => String(id).replace(/[^0-9]/g, ''))
-
-  // Si eres tú mismo (el número del bot) también eres owner
   if (m.fromMe) return true
-
-  // Compara: ¿algún número tuyo está en la lista de owners?
-  return myNumbers.some(num => ownerNumbers.some(owner => 
-    owner.endsWith(num.slice(-8)) || num.endsWith(owner.slice(-8)) || owner === num
-  ))
+  return myNumbers.some(num => ownerNumbers.some(owner => owner.endsWith(num.slice(-8)) || num.endsWith(owner.slice(-8)) || owner === num))
 }
 
 var handler = async (m, { conn, text, isROwner }) => {
-  // Ya no usamos handler.rowner, lo chequeamos aquí
   if (!isOwnerReal(m, conn) && !isROwner) {
-    return conn.sendMessage(m.chat, { text: `📍 No eres owner bro, tu ID es: ${m.sender}` }, { quoted: m })
+    return conn.sendMessage(m.chat, { text: `╭───〔 *⛔ SIN PERMISO* 〕───╮\n│\n│ 👤 No eres owner bro\n│ 🆔 Tu ID: ${m.sender}\n│\n╰──────────────────╯` }, { quoted: m })
   }
 
-  // Si el chat tiene fOwners desactivado y es grupo, no hacer nada (pero owner sí puede)
-  // Quitamos el bloqueo anterior que te sacaba
+  await m.react("🔄").catch(() => {})
 
-  await m.react("⏰").catch(() => {})
+  // Mensaje de buscando
+  let buscando = await conn.sendMessage(m.chat, { text: `╭───〔 *🔄 BUSCANDO ACTUALIZACIÓN* 〕───╮\n│\n│ ⏳ Revisando GitHub...\n│ 📦 Espera un momento...\n│\n╰──────────────────╯` }, { quoted: m })
+
   try {
-    const stdout = execSync('git pull' + (m.fromMe && text ? ' ' + text : ''));
-    let messager = stdout.toString()
-    if (messager.includes('📍  La actualización de la pagina web ya esta en un estado normal.')) messager = '📍  La actualización del la pagina ya esta completa, no es necesario actualizarla.'
-    if (messager.includes('⏳  Actualización pendiente...')) messager = '✓  *[ WEB : ACTUALIZADO ]*\n\n' + stdout.toString()
-    conn.sendMessage(m.chat, { text: `\`\`\`${messager}\`\`\`` }, { quoted: m })
-  } catch {
+    const stdout = execSync('git pull' + (m.fromMe && text ? ' ' + text : '')).toString()
+    const hora = new Date().toLocaleString('es-PE', { timeZone: 'America/Lima', hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    const fecha = new Date().toLocaleString('es-PE', { timeZone: 'America/Lima', day: '2-digit', month: '2-digit', year: 'numeric' })
+
+    // ── 1. YA ESTÁ ACTUALIZADO ──
+    if (stdout.includes('Already up to date')) {
+      let msg = `╭───〔 *✅ BOT ACTUALIZADO* 〕───╮
+│
+│ 📅 *Fecha:* ${fecha}
+│ 🕒 *Hora:* ${hora}
+│
+│ ━━━━━━━━━━━━━━━━━━
+│
+│ ✨ *No hay nada nuevo bro*
+│ 📦 Ya tienes la última versión
+│ 🐉 Tu bot está al día
+│
+│ ━━━━━━━━━━━━━━━━━━
+│
+│ 💡 *Estado:* Sin cambios
+│
+╰──────────────────╯
+
+> *Goku Bot - Sistema de Actualización*`
+      return conn.sendMessage(m.chat, { text: msg, edit: buscando.key }, { quoted: m })
+    }
+
+    // ── 2. SI HAY ACTUALIZACIÓN ──
+    // Saca los archivos que cambiaron
+    let archivos = stdout.split('\n').filter(l => l.includes('|')).map(l => '│ 📄 ' + l.trim()).join('\n')
+    if (!archivos) archivos = '│ 📄 Se actualizaron archivos del sistema'
+
+    // Saca cuantos archivos cambiaron
+    let resumen = stdout.split('\n').find(l => l.includes('file') && l.includes('changed')) || 'Archivos actualizados'
+
+    let msg2 = `╭───〔 *🚀 ACTUALIZACIÓN COMPLETADA* 〕───╮
+│
+│ 📅 *Fecha:* ${fecha}
+│ 🕒 *Hora:* ${hora}
+│
+│ ━━━━━━━━━━━━━━━━━━
+│
+│ *📂 ARCHIVOS ACTUALIZADOS:*
+${archivos}
+│
+│ ━━━━━━━━━━━━━━━━━━
+│
+│ 📊 *Resumen:* ${resumen.trim()}
+│ ✅ *Estado:* Actualizado con éxito
+│
+│ ━━━━━━━━━━━━━━━━━━
+│
+│ ⚠️ *IMPORTANTE:*
+│ 🔄 Reinicia el bot en el panel
+│    para aplicar los cambios
+│
+╰──────────────────╯
+
+> *Goku Bot - Actualizado correctamente 🐉*`
+
+    await conn.sendMessage(m.chat, { text: msg2, edit: buscando.key }, { quoted: m })
+    await m.react("✅").catch(() => {})
+
+  } catch (e) {
+    // ── 3. SI HAY ERROR ──
     try {
-      const status = execSync('git status --porcelain')
-      if (status.length > 0) {
-        const conflictedFiles = status.toString().split('\n').filter(line => line.trim() !== '').map(line => {
-          if (line.includes('.npm/') || line.includes('.cache/') || line.includes('tmp/') || line.includes('database.json') || line.includes('sessions/Principal/') || line.includes('npm-debug.log')) {
-            return null
-          }
-          return '*→ ' + line.slice(3) + '*'
-        }).filter(Boolean)
-        if (conflictedFiles.length > 0) {
-          const errorMessage = `📍  [ ERROR ]:\n\n${conflictedFiles.join('\n')}.`
-          await conn.reply(m.chat, errorMessage, m)
-        }
-      }
-    } catch (error) {
-      console.error(error)
-      let errorMessage2 = '📍  [ ERROR ]'
-      if (error.message) {
-        errorMessage2 += '\n•> error: ' + error.message
-      }
-      await conn.sendMessage(m.chat, { text: errorMessage2 }, { quoted: m })
+      const status = execSync('git status --porcelain').toString()
+      let conflictos = status.split('\n').filter(l => l.trim() !== '' && !l.includes('.npm/') && !l.includes('.cache/') && !l.includes('tmp/') && !l.includes('database.json') && !l.includes('sessions/') && !l.includes('npm-debug.log')).map(l => '│ ❌ ' + l.slice(3)).join('\n')
+
+      let msgError = `╭───〔 *❌ ERROR AL ACTUALIZAR* 〕───╮
+│
+│ 📍 *Hubo un problema bro*
+│
+│ ━━━━━━━━━━━━━━━━━━
+│
+│ *📂 ARCHIVOS CON CONFLICTO:*
+${conflictos || '│ ❌ Error desconocido'}
+│
+│ ━━━━━━━━━━━━━━━━━━
+│
+│ 💡 *Solución:*
+│ Borra esos archivos o haz
+│ git reset --hard en el panel
+│
+╰──────────────────╯`
+      await conn.sendMessage(m.chat, { text: msgError, edit: buscando.key }, { quoted: m })
+    } catch (err) {
+      await conn.sendMessage(m.chat, { text: `╭───〔 *❌ ERROR* 〕───╮\n│\n│ ${err.message}\n│\n╰──────────────────╯`, edit: buscando.key }, { quoted: m })
     }
   }
 }
@@ -78,6 +119,5 @@ var handler = async (m, { conn, text, isROwner }) => {
 handler.help = ['update']
 handler.tags = ['owner']
 handler.command = ['update', 'fix', 'actualizar']
-// NO PONGAS handler.rowner = true, ESO ES LO QUE TE BLOQUEABA
 handler.rowner = false
 export default handler
