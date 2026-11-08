@@ -62,7 +62,7 @@ let menu = `
 `.trim()
 
 try {
-  let res = await fetch('https://cdn.dev-ander.xyz/file/r74i7l.jpg')
+  let res = await fetch('https://cdn.dev-ander.xyz/file/9xgopy.jpg ')
   let img = Buffer.from(await res.arrayBuffer())
   await conn.sendMessage(m.chat, { image: img, caption: menu, mentions: [m.sender] }, { quoted: m })
 } catch {
