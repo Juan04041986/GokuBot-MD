@@ -2,7 +2,9 @@ import fetch from 'node-fetch'
 import moment from 'moment-timezone'
 
 let handler = async (m, { conn, usedPrefix }) => {
-  const name = await conn.getName(m.sender).catch(() => 'Usuario')
+  let name = 'Usuario'
+  try { name = conn.getName(m.sender) || 'Usuario' } catch {}
+  
   const uptime = clockString(process.uptime() * 1000)
   const hora = moment.tz('America/Lima').format('HH:mm:ss')
   const fecha = moment.tz('America/Lima').format('DD/MM/YYYY')
@@ -97,20 +99,16 @@ ${String.fromCharCode(8206).repeat(4001)}
 > *Goku Bot - Hecho para ti 🐉*
 `.trim()
 
-  // --- INTENTA CON IMAGEN, SI FALLA MANDA SOLO TEXTO ---
   try {
     const res = await fetch('https://i.imgur.com/9dG5y9J.jpg')
     const img = Buffer.from(await res.arrayBuffer())
-
     await conn.sendMessage(m.chat, {
       image: img,
       caption: menu,
       mentions: [m.sender]
     }, { quoted: m })
-
   } catch (e) {
     console.log('Sin imagen, mando texto:', e.message)
-    // ESTE NUNCA FALLA, ES SOLO TEXTO
     await conn.sendMessage(m.chat, {
       text: menu,
       mentions: [m.sender]
