@@ -1,3 +1,5 @@
+import fetch from 'node-fetch'
+
 let handler = async (m, { conn, usedPrefix }) => {
 let menu = `
 ╭───〔 *🐉 GOKU BOT* 〕───╮
@@ -59,7 +61,13 @@ let menu = `
 > *Goku Bot 🐉*
 `.trim()
 
-await conn.sendMessage(m.chat, { text: menu, mentions: [m.sender] }, { quoted: m })
+try {
+  let res = await fetch('https://cdn.dev-ander.xyz/file/r74i7l.jpg')
+  let img = Buffer.from(await res.arrayBuffer())
+  await conn.sendMessage(m.chat, { image: img, caption: menu, mentions: [m.sender] }, { quoted: m })
+} catch {
+  await conn.sendMessage(m.chat, { text: menu, mentions: [m.sender] }, { quoted: m })
+}
 }
 
 handler.help = ['menu']
