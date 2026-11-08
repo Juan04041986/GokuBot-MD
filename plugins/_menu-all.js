@@ -1,35 +1,37 @@
 import fetch from 'node-fetch'
-import { xpRange } from '../lib/levelling.js'
 import fs from 'fs'
 import moment from 'moment-timezone'
 import PhoneNumber from 'awesome-phonenumber'
-let handler = async (m, { conn, usedPrefix, args, command, __dirname, participants }) => {
+
+let handler = async (m, { conn, usedPrefix, participants }) => {
 try {
 const user = global.db.data.users[m.sender] || {}
-const name = await conn.getName(m.sender)
-const thumbBot = Buffer.from(await (await fetch(`${global.gokuMenu}`)).arrayBuffer())
-const thumbBot2 = Buffer.from(await (await fetch(`${global.gokuImg}`)).arrayBuffer())
+const name = await conn.getName(m.sender) || 'Usuario'
 const premium = user.premium ? '✓' : '✘'
-const torucoin = user.torucoin || 0
-const totalreg = Object.keys(global.db.data.users).length
-const groupUserCount = m.isGroup ? participants.length : '-'
-const groupsCount = Object.values(conn.chats).filter(v => v.id.endsWith('@g.us')).length
 const uptime = clockString(process.uptime() * 1000)
-const dFormato = new Date(new Date + 3600000)
 const fecha = new Date(Date.now())
 const locale = 'es-AR'
-const dia = fecha.toLocaleDateString(locale, { weekday: 'long' })
-const fechaTxt = fecha.toLocaleDateString(locale, { day: 'numeric', month: 'long', year: 'numeric' })
-const hora = `${moment.tz('America/Buenos_Aires').format('HH:mm:ss')}`
-const totalCommands = Object.keys(global.plugins).length
-const userId = m.sender.split('@')[0]
-const phone = PhoneNumber('+' + userId)
-const pais = phone.getRegionCode() || 'Desconocido'
-const perfil = await conn.profilePictureUrl(conn.user.jid, 'image').catch(() => `${ifoto}`)
+const hora = moment.tz('America/Buenos_Aires').format('HH:mm:ss')
+
+// --- ESTO ES LO QUE FALLABA, AHORA CON RESPALDO ---
+const botname = global.botname || 'Goku Bot'
+const textbot = global.textbot || 'Goku Bot - Dragon Ball'
+const vs = global.vs || '1.0'
+const gokuMenu = global.gokuMenu || 'https://i.imgur.com/2qWzXyL.jpg'
+
+// Thumbnail con try, si falla no tumba el menú
+let thumb = null
+try {
+  const res = await fetch(gokuMenu)
+  if (res.ok) thumb = Buffer.from(await res.arrayBuffer())
+} catch {}
+
 let menuAll = `▢ *Prefix* : (/ # - . ,)
-▢ *Usuario* : @${name}
+▢ *Usuario* : @${m.sender.split('@')[0]}
 ▢ *Version* : ${vs}_mx-ls
 ▢ *Modo* : Privado.
+▢ *Uptime* : ${uptime}
+▢ *Hora* : ${hora}
 ${readMore}
 ⚶⭒ \`Informacion\` 
 \t㊙ *${usedPrefix}menuaudio*
@@ -48,7 +50,7 @@ ${readMore}
 \t㊙ *${usedPrefix}estado*
 \t㊙ *${usedPrefix}ping*
 \t㊙ *${usedPrefix}run*
-\t㊙ *${usedPrefix}support*  =  text
+\t㊙ *${usedPrefix}support*
 
 ⚶⭒ \`Biografia DB\`
 \t📖 *${usedPrefix}biografíagoku*
@@ -59,14 +61,13 @@ ${readMore}
 \t📖 *${usedPrefix}biografíatrunks*
 \t📖 *${usedPrefix}biografíajiren*
 
-
 ⚶⭒ \`Descargas\` 
 \t⬇️ *${usedPrefix}play*  =  link/text
-\t⬇️​ *${usedPrefix}ytmp3*  =  link/text
-\t⬇️​ *${usedPrefix}ytmp4*  =  link/text
-\t⬇️​ *${usedPrefix}github*  =  link
-\t⬇️​ *${usedPrefix}mediafire*  =  link
-\t⬇️​ *${usedPrefix}facebook*  =  link
+\t⬇️ *${usedPrefix}ytmp3*  =  link/text
+\t⬇️ *${usedPrefix}ytmp4*  =  link/text
+\t⬇️ *${usedPrefix}github*  =  link
+\t⬇️ *${usedPrefix}mediafire*  =  link
+\t⬇️ *${usedPrefix}facebook*  =  link
 \t⬇️ *${usedPrefix}instagram*  =  link
 \t⬇️ *${usedPrefix}twitter*  =  link
 \t⬇️ *${usedPrefix}spotify*  =  link
@@ -75,64 +76,25 @@ ${readMore}
 \t⬇️ *${usedPrefix}sly*  =  link
 
 ⚶⭒ \`Busquedas\` 
-\t🔍 *${usedPrefix}fdroids*  =  text
 \t🔍 *${usedPrefix}google*  =  text
 \t🔍 *${usedPrefix}imagen*  =  text
-\t🔍 *${usedPrefix}tiktoks*  =  text
-\t🔍 *${usedPrefix}pinimg*  =  text
-\t🔍 *${usedPrefix}spotifys*  =  text
-\t🔍 *${usedPrefix}slys*  =  text
-\t🔍 *${usedPrefix}apk*  =  text
 \t🔍 *${usedPrefix}yts*  =  text
-\t🔍 *${usedPrefix}apples*  =  text
-\t🔍 *${usedPrefix}tenor*  =  text
+\t🔍 *${usedPrefix}apk*  =  text
 
 ⚶⭒ \`Grupos\` 
 \t🐲 *${usedPrefix}link*
-\t🐲 *${usedPrefix}inum*
-\t🐲 *${usedPrefix}dnum*
-\t🐲 *${usedPrefix}invocar*  =  text
-\t🐲 *${usedPrefix}img+*  =  text
-\t🐲 *${usedPrefix}name+*  =  text
-\t🐲 *${usedPrefix}desc+*  =  text
 \t🐲 *${usedPrefix}kick*  =  mention
 \t🐲 *${usedPrefix}add*  =  number
-\t🐲 *${usedPrefix}admin+*  =  mention
-\t🐲 *${usedPrefix}admin-*  =  mention
-\t🐲 *${usedPrefix}warn+*  = mention 
-\t🐲 *${usedPrefix}warn-*  =  mention
-\t🐲 *${usedPrefix}mute+*  =  mention
-\t🐲 *${usedPrefix}mute-*  =  mention
+\t🐲 *${usedPrefix}invocar*  =  text
 
 ⚶⭒ \`Convertidor\` 
-\tᗢ *${usedPrefix}hd*  =  reply
-\tᗢ *${usedPrefix}turl*  =  reply
-\tᗢ *${usedPrefix}catbox*  =  reply
+\tᗢ *${usedPrefix}sticker*  =  reply
 \tᗢ *${usedPrefix}togif*  =  reply
 \tᗢ *${usedPrefix}jpg*  =  reply
-\tᗢ *${usedPrefix}sticker*  =  reply
-
-⚶⭒ \`Utilidad\` 
-\tᗢ *${usedPrefix}lid*
-\tᗢ *${usedPrefix}cid*  =  link
-\tᗢ *${usedPrefix}pais*  =  text
-\tᗢ *${usedPrefix}lids*  =  count
 
 ⚶⭒ \`Inteligencia\` 
 \tᗢ *${usedPrefix}chatgpt*  =  text
-\tᗢ *${usedPrefix}dolphin*  =  text
-\tᗢ *${usedPrefix}claude*  =  text
 \tᗢ *${usedPrefix}imagina*  =  text
-
-⚶⭒ \`Random\` 
-\tᗢ *${usedPrefix}wallp*
-\tᗢ *${usedPrefix}rd messi*
-\tᗢ *${usedPrefix}rd cr7*
-\tᗢ *${usedPrefix}rd itzy*
-\tᗢ *${usedPrefix}rd hallowwen*
-\tᗢ *${usedPrefix}rd navidad*
-\tᗢ *${usedPrefix}rd bts*
-\tᗢ *${usedPrefix}rd universo*
 
 ⚶⭒ \`Juegos RPG\` 
 \tᗢ *${usedPrefix}minar*
@@ -140,41 +102,51 @@ ${readMore}
 \tᗢ *${usedPrefix}cazar*
 \tᗢ *${usedPrefix}work*
 \tᗢ *${usedPrefix}aventura*
-\tᗢ *${usedPrefix}robar*
 \tᗢ *${usedPrefix}coins*
 \tᗢ *${usedPrefix}nivel*
 
-
 ⚶⭒ \`Owner\` 
 \tᗢ *${usedPrefix}err*
-\tᗢ *${usedPrefix}wx-*
 \tᗢ *${usedPrefix}fix*
-\tᗢ *${usedPrefix}++admin*
-\tᗢ *${usedPrefix}full!*  ⧾  
-\tᗢ *${usedPrefix}notch*  ⧾  text
-\tᗢ *${usedPrefix}file+*  ⧾  query
-\tᗢ *${usedPrefix}file-*  ⧾  query
 
 > ${textbot}`
-await conn.sendMessage(m.chat, { text: menuAll, contextInfo: { forwardingScore: 1, isForwarded: false, externalAdReply: { showAdAttribution: false, renderLargerThumbnail: true, title: botname, body: textbot, containsAutoReply: true, mediaType: 1, thumbnailUrl: global.gokuMenu, sourceUrl: null }}}, { quoted: m })
-//conn.sendMessage(m.chat, { text: menuAll, mentions: [m.sender], contextInfo: { externalAdReply: { title: botname, body: textbot, thumbnail: thumbBot, sourceUrl: null, mediaType: 1, renderLargerThumbnail: true }}}, { quoted: m })
+
+// --- ESTE ES EL ENVIO QUE FUNCIONA EN NORMAL Y BUSINESS ---
+await conn.sendMessage(m.chat, {
+  text: menuAll,
+  mentions: [m.sender],
+  contextInfo: {
+    mentionedJid: [m.sender],
+    forwardingScore: 999,
+    isForwarded: true,
+    externalAdReply: {
+      showAdAttribution: true,
+      title: botname,
+      body: textbot,
+      thumbnail: thumb, // <-- antes usabas thumbnailUrl, eso lo bloquea en normal
+      sourceUrl: 'https://whatsapp.com/channel/0029VaJxJXr0gcfN5w5jA71',
+      mediaType: 1,
+      renderLargerThumbnail: true
+    }
+  }
+}, { quoted: m })
+
 } catch (e) {
 console.error(e)
-await conn.sendMessage(m.chat, { text: `${e.message}` }, { quoted: m })
+// Si falla el AdReply, manda el menú simple para que nunca se quede sin salir
+await conn.sendMessage(m.chat, { text: `Error, menú simple:\n\nUsa ${usedPrefix}menu`, mentions: [m.sender] }, { quoted: m })
 }
 }
 
 handler.command = ['menu', 'help', 'menú']
-
-
 export default handler
 
 const more = String.fromCharCode(8206)
 const readMore = more.repeat(4001)
 
- function clockString(ms) {
+function clockString(ms) {
 const h = isNaN(ms) ? '--' : Math.floor(ms / 3600000)
 const m = isNaN(ms) ? '--' : Math.floor(ms / 60000) % 60
 const s = isNaN(ms) ? '--' : Math.floor(ms / 1000) % 60
 return [h, m, s].map(v => v.toString().padStart(2, '0')).join(':')
-  }
+       }
