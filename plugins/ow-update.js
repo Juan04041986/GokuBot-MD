@@ -37,7 +37,7 @@ var handler = async (m, { conn, text, isROwner }) => {
 │
 │ ━━━━━━━━━━━━━━━━━━
 │
-│ ✨ *No hay nada nuevo bro*
+│ ✨ *No hay nada nuevo*
 │ 📦 Ya tienes la última versión
 │ 🐉 Tu bot está al día
 │
@@ -95,7 +95,7 @@ ${archivos}
 
       let msgError = `╭───〔 *❌ ERROR AL ACTUALIZAR* 〕───╮
 │
-│ 📍 *Hubo un problema bro*
+│ 📍 *Hubo un problema*
 │
 │ ━━━━━━━━━━━━━━━━━━
 │
