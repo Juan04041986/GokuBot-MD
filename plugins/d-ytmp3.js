@@ -24,13 +24,19 @@ let data = json.data
 
 if (!data?.download) throw new Error('Sin link')
 
+// Aqui esta el arreglo: descargar el mp3 a buffer, no mandar la url pelada
+let res = await fetch(data.download)
+let buffer = Buffer.from(await res.arrayBuffer())
+
 await conn.sendMessage(m.chat, {
-audio: { url: data.download },
+audio: buffer,
 mimetype: 'audio/mpeg',
-fileName: `${data.title}.mp3`
+fileName: `${data.title}.mp3`,
+ptt: false
 }, { quoted: m })
 
 } catch (e) {
+console.log(e)
 await conn.sendMessage(m.chat, { text: 'Error al descargar el audio. Intenta con otro.' }, { quoted: m })
 }
 }
