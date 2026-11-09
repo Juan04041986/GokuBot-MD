@@ -1,8 +1,13 @@
-// ===== TODO EN UNO: registra + antiprivado + comando =====
+// ===== TODO EN UNO: autoread + actividad + antiprivado + veractividad =====
 
 export async function before(m, { conn, isAdmin, isROwner }) {
 if (m.isBaileys && m.fromMe) return false
 if (!m.message) return true
+
+// 0. AUTOREAD - marca como leído todo lo que le llega
+try {
+  if (m.key) await conn.readMessages([m.key])
+} catch (e) {}
 
 // 1. REGISTRAR ACTIVIDAD
 try {
@@ -50,16 +55,32 @@ if (bot.fPrivado) {
 return false
 }
 
-// 3. COMANDO .veractividad
-let handler = async (m, { conn, usedPrefix }) => {
+// 3. COMANDOS: .veractividad y .autoread
+let handler = async (m, { conn, usedPrefix, command, args }) => {
 try {
+// --- .autoread on / off ---
+if (command === 'autoread') {
+  let bot = global.db.data.settings[conn.user.jid] || {}
+  if (!global.db.data.settings[conn.user.jid]) global.db.data.settings[conn.user.jid] = {}
+  bot = global.db.data.settings[conn.user.jid]
+  let opcion = (args[0] || '').toLowerCase()
+  if (opcion === 'on') {
+    bot.autoRead = true
+    return conn.sendMessage(m.chat, { text: `*« 🐲 »* Autoread *ACTIVADO* ✅\n\nAhora el bot marca como leído todos los mensajes.` }, { quoted: m })
+  }
+  if (opcion === 'off') {
+    bot.autoRead = false
+    return conn.sendMessage(m.chat, { text: `*« 🐲 »* Autoread *DESACTIVADO* ❌` }, { quoted: m })
+  }
+  return conn.sendMessage(m.chat, { text: `*« 🐲 »* Autoread: *${bot.autoRead ? 'ACTIVADO ✅' : 'DESACTIVADO ❌'}*\n\nUsa:\n*${usedPrefix}autoread on*\n*${usedPrefix}autoread off*` }, { quoted: m })
+}
+
+// --- .veractividad ---
 let act = global.db.data.actividad
 let hoy = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Lima' })
 if (!act || act.fecha !== hoy || !act.total) {
-  return conn.sendMessage(m.chat, { text: `*「🐲」 GOKU BOT - ACTIVIDAD DE HOY*\n\n> 😴 Aún no hay actividad hoy, chico.\n> Usa un comando y vuelve a ver.\n\n> 📅 Fecha » *${hoy}*` }, { quoted: m })
+  return conn.sendMessage(m.chat, { text: `*「🐲」 GOKU BOT - ACTIVIDAD DE HOY*\n\n> 😴 Aún no hay actividad hoy, chico.\n\n> 📅 Fecha » *${hoy}*` }, { quoted: m })
 }
-
-// Ver lo que usó una persona: .veractividad @persona
 let target = m.mentionedJid?.[0] || (m.quoted ? m.quoted.sender : null)
 if (target) {
   let data = act.usuarios[target]
@@ -68,7 +89,6 @@ if (target) {
   let ultimos = data.ultimos.map(u => `> 🕐 *${u.hora}* - *${u.cmd}* - ${u.texto}`).join('\n')
   return conn.sendMessage(m.chat, { text: `*「🐲」 ACTIVIDAD DE @${target.split('@')[0]}*\n\n> 📅 Fecha » *${hoy}*\n> 📊 Total hoy » *${data.total} comandos*\n\n*「🔥」 LO QUE USÓ:*\n${lista}\n\n*「🕐」 ÚLTIMOS:*\n${ultimos}` , mentions: [target] }, { quoted: m })
 }
-
 let topCmds = Object.entries(act.comandos || {}).sort((a,b) => b[1]-a[1]).slice(0,5).map(([c,n],i) => `> ${i+1}. *${c}* - ${n} veces`).join('\n')
 let topUsers = Object.entries(act.usuarios || {}).sort((a,b) => b[1].total-a[1].total).slice(0,5).map(([jid,data],i) => `> ${i+1}. @${jid.split('@')[0]} - ${data.total} comandos`).join('\n')
 let yo = act.usuarios[m.sender]
@@ -81,6 +101,6 @@ await conn.sendMessage(m.chat, { text: texto, mentions: [...Object.keys(act.usua
   await conn.sendMessage(m.chat, { text: `❌ Error: ${e.message}` }, { quoted: m })
 }
 }
-handler.command = ['veractividad', 'actividad', 'activity']
+handler.command = ['veractividad', 'actividad', 'activity', 'autoread']
 handler.tags = ['info']
 export default handler
