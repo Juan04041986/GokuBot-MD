@@ -78,7 +78,7 @@ const query = text?.trim()
 if (!query) return conn.sendMessage(m.chat, { text: `ꕤ Ingresa nombre o link\n*${usedPrefix + command}* Ozuna Una Aventura` }, { quoted: m })
 
 try {
-await m.react('🎧')
+await m.react('⏳')
 
 let video
 if (/^(?:https?:\/\/)?(?:www\.|m\.|music\.)?youtu\.?be/.test(query)) {
