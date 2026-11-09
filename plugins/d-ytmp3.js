@@ -63,11 +63,7 @@ const getAudio = async (videoUrl) => {
     let ultimo = null
     for (let intento = 1; intento <= 2; intento++) {
         const tareas = [...apis.map(pedirAudio), pedirDorratz(videoUrl)]
-        try {
-            return await Promise.any(tareas)
-        } catch (err) {
-            ultimo = err
-        }
+        try { return await Promise.any(tareas) } catch (err) { ultimo = err }
     }
     const primerError = ultimo?.errors?.[0]?.message
     throw new Error(`todas las APIs fallaron${primerError ? ': ' + primerError : ''}`)
@@ -105,42 +101,52 @@ if (!video.seconds) {
 
 const videoUrl = `https://youtu.be/${video.videoId}`
 const titulo = limpiarNombre(video.title)
-
 const audio = await getAudio(videoUrl)
 const mb = (audio.length / (1024 * 1024)).toFixed(2)
 
-// MINIATURA ESTILO GOKU - igual que el play
-let thumb = null
-try {
-let img = await axios.get(video.thumbnail, { responseType: 'arraybuffer' })
-thumb = Buffer.from(img.data)
-} catch {}
-
+// MINIATURA MAS GOKU
 await conn.sendMessage(m.chat, {
   image: { url: video.thumbnail },
-  caption: `*「✦」 ¡Descargando!*\n\n> ❀ Título » *${video.title}*\n\n> ✐ Canal » *${video.author?.name || 'Desconocido'}*\n> ⴵ Duración » *${video.timestamp || '?'}*\n> ❒ Tamaño » *${mb}MB*\n> 🜸 Link » _${videoUrl}_`
+  caption: `*「🐲」 GOKU BOT - ¡DESCARGANDO!*\n\n> ❀ Título » *${video.title}*\n> ✐ Canal » *${video.author?.name || 'Desconocido'}*\n> ⴵ Duración » *${video.timestamp || '?'}*\n> ❒ Tamaño » *${mb}MB*\n> 🜸 Link » _${videoUrl}_\n\n> *🐲 Goku descargando tu audio... espera chico 🔥*`
 }, { quoted: m }).catch(() => null)
 
-if (audio.length > DOC_BYTES) {
-  await conn.sendMessage(m.chat, { document: audio, mimetype: 'audio/mpeg', fileName: `${titulo}.mp3` }, { quoted: m })
-} else {
-  await conn.sendMessage(m.chat, {
-    audio: audio,
-    mimetype: 'audio/mpeg',
-    fileName: `${titulo}.mp3`,
-    ptt: false,
-    contextInfo: {
-      externalAdReply: {
-        title: video.title,
-        body: `Canal: ${video.author?.name || 'Desconocido'} | 🐲 GokuBot`,
-        thumbnail: thumb,
-        mediaType: 2,
-        mediaUrl: videoUrl,
-        sourceUrl: videoUrl,
-        renderLargerThumbnail: true
+// AUDIO CON FALLBACK: si la miniatura lo tumba, lo manda sin miniatura pero SI llega
+try {
+  let thumb = null
+  try {
+    let img = await axios.get(video.thumbnail, { responseType: 'arraybuffer' })
+    thumb = Buffer.from(img.data)
+  } catch {}
+
+  if (audio.length > DOC_BYTES) {
+    await conn.sendMessage(m.chat, { document: audio, mimetype: 'audio/mpeg', fileName: `${titulo}.mp3` }, { quoted: m })
+  } else {
+    await conn.sendMessage(m.chat, {
+      audio: audio,
+      mimetype: 'audio/mpeg',
+      fileName: `${titulo}.mp3`,
+      ptt: false,
+      contextInfo: {
+        externalAdReply: {
+          title: `🐲 ${video.title}`,
+          body: 'Goku descargando... | GokuBot 🐲',
+          thumbnail: thumb,
+          mediaType: 2,
+          mediaUrl: videoUrl,
+          sourceUrl: videoUrl,
+          renderLargerThumbnail: true
+        }
       }
-    }
-  }, { quoted: m })
+    }, { quoted: m })
+  }
+} catch (e) {
+  console.log('FALLO CON MINIATURA, MANDANDO SIN ELLA:', e.message)
+  // Plan B: sin miniatura, para que no te quedes sin audio
+  if (audio.length > DOC_BYTES) {
+    await conn.sendMessage(m.chat, { document: audio, mimetype: 'audio/mpeg', fileName: `${titulo}.mp3` }, { quoted: m })
+  } else {
+    await conn.sendMessage(m.chat, { audio: audio, mimetype: 'audio/mpeg', fileName: `${titulo}.mp3`, ptt: false }, { quoted: m })
+  }
 }
 
 await m.react('✅')
