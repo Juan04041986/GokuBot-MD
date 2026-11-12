@@ -1,7 +1,5 @@
 import { chatWithMemory, clearMemory, rememberBotAiMessage } from '../lib/ai.js'
 
-const THUMB_CLAUDE = 'https://files.catbox.moe/zjt0xe.jpg'
-
 let handler = async (m, { conn, usedPrefix, command, text }) => {
   const chat = global.db?.data?.chats?.[m.chat]
   if (m.isGroup && chat && chat.fAis === false) {
@@ -9,7 +7,8 @@ let handler = async (m, { conn, usedPrefix, command, text }) => {
   }
 
   const quotedText = (m.quoted?.text || m.quoted?.caption || '').trim()
-  const prompt = (text || '').trim() || quotedText
+  const trimmed = (text || '').trim()
+  const prompt = trimmed || quotedText
 
   if (!prompt) {
     return conn.sendMessage(
@@ -31,38 +30,12 @@ let handler = async (m, { conn, usedPrefix, command, text }) => {
   try {
     const { text: respuesta } = await chatWithMemory({
       sessionKey,
-      prompt: (text || '').trim() || quotedText,
-      quotedText: (text || '').trim() && quotedText && quotedText !== (text || '').trim() ? quotedText : '',
+      prompt: trimmed || quotedText,
+      quotedText: trimmed && quotedText && quotedText !== trimmed ? quotedText : '',
       mode: 'claude'
     })
 
-    let sent
-    try {
-      sent = await conn.sendMessage(
-        m.chat,
-        {
-          text: respuesta,
-          contextInfo: {
-            forwardingScore: 1,
-            isForwarded: false,
-            externalAdReply: {
-              showAdAttribution: false,
-              renderLargerThumbnail: false,
-              title: 'Claude AI',
-              body: global.botname || 'GokuBot',
-              containsAutoReply: true,
-              mediaType: 1,
-              thumbnailUrl: THUMB_CLAUDE,
-              sourceUrl: null
-            }
-          }
-        },
-        { quoted: m }
-      )
-    } catch {
-      sent = await conn.sendMessage(m.chat, { text: respuesta }, { quoted: m })
-    }
-
+    const sent = await conn.sendMessage(m.chat, { text: respuesta }, { quoted: m })
     rememberBotAiMessage(sent?.key?.id)
     await m.react('✅').catch(() => {})
   } catch (error) {

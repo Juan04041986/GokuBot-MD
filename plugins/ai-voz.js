@@ -57,6 +57,7 @@ const handler = async (m, { text, conn, command, usedPrefix }) => {
       {
         audio: tts.buffer,
         mimetype: tts.mimetype || 'audio/mpeg',
+        fileName: 'voz.mp3',
         ptt: false
       },
       { quoted: m }

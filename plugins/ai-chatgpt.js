@@ -1,15 +1,29 @@
 import { chatWithMemory, clearMemory, rememberBotAiMessage } from '../lib/ai.js'
 
-const THUMB_GPT = 'https://files.catbox.moe/3rhs2g.jpg'
+let handler = async (m, { conn, usedPrefix, command, text, isAdmin, isOwner, isROwner }) => {
+  if (!global.db.data.chats[m.chat]) global.db.data.chats[m.chat] = {}
+  const chat = global.db.data.chats[m.chat]
 
-let handler = async (m, { conn, usedPrefix, command, text }) => {
-  const chat = global.db?.data?.chats?.[m.chat]
-  if (m.isGroup && chat && chat.fAis === false) {
+  const trimmed = (text || '').trim()
+  if (/^(on|off|activar|desactivar)$/i.test(trimmed)) {
+    if (m.isGroup && !(isAdmin || isOwner || isROwner)) {
+      return conn.sendMessage(m.chat, { text: global.fargs?.admins || '㊙️ *Solo administradores...*' }, { quoted: m })
+    }
+    const enable = /^(on|activar)$/i.test(trimmed)
+    chat.fAis = enable
+    return conn.sendMessage(
+      m.chat,
+      { text: `✅ Se ha *${enable ? 'activado' : 'desactivado'}* la inteligencia artificial en este chat.` },
+      { quoted: m }
+    )
+  }
+
+  if (m.isGroup && chat.fAis === false) {
     return conn.sendMessage(m.chat, { text: `📍  Los comandos de *[ inteligencia artificial ]* estan desactivados...` }, { quoted: m })
   }
 
   const quotedText = (m.quoted?.text || m.quoted?.caption || '').trim()
-  const prompt = (text || '').trim() || quotedText
+  const prompt = trimmed || quotedText
 
   if (!prompt) {
     return conn.sendMessage(
@@ -30,41 +44,14 @@ let handler = async (m, { conn, usedPrefix, command, text }) => {
 
   try {
     const mode = command === 'gokuia' ? 'gokuia' : command === 'gemini' ? 'gemini' : 'chatgpt'
-    const title = command === 'gokuia' ? 'GokuBot IA' : command === 'gemini' ? 'Gemini AI' : 'Chat GPT'
     const { text: respuesta } = await chatWithMemory({
       sessionKey,
-      prompt: (text || '').trim() || quotedText,
-      quotedText: (text || '').trim() && quotedText && quotedText !== (text || '').trim() ? quotedText : '',
+      prompt: trimmed || quotedText,
+      quotedText: trimmed && quotedText && quotedText !== trimmed ? quotedText : '',
       mode
     })
 
-    let sent
-    try {
-      sent = await conn.sendMessage(
-        m.chat,
-        {
-          text: respuesta,
-          contextInfo: {
-            forwardingScore: 1,
-            isForwarded: false,
-            externalAdReply: {
-              showAdAttribution: false,
-              renderLargerThumbnail: false,
-              title,
-              body: global.botname || 'GokuBot',
-              containsAutoReply: true,
-              mediaType: 1,
-              thumbnailUrl: THUMB_GPT,
-              sourceUrl: null
-            }
-          }
-        },
-        { quoted: m }
-      )
-    } catch {
-      sent = await conn.sendMessage(m.chat, { text: respuesta }, { quoted: m })
-    }
-
+    const sent = await conn.sendMessage(m.chat, { text: respuesta }, { quoted: m })
     rememberBotAiMessage(sent?.key?.id)
     await m.react('✅').catch(() => {})
   } catch (error) {

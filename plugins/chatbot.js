@@ -3,6 +3,7 @@ import { chatWithMemory, clearMemory, isBotAiMessage, rememberBotAiMessage } fro
 const activeChats = new Set()
 const lastReplyAt = new Map()
 const REPLY_COOLDOWN_MS = 1500
+const COMMAND_PREFIX_RE = /^[#!./-]/
 
 function normalizeNum(jid) {
   return String(jid || '')
@@ -11,7 +12,7 @@ function normalizeNum(jid) {
     .replace(/[^0-9]/g, '')
 }
 
-function getBotIds(conn) {
+function getBotIds(conn, participants = []) {
   const raw = [
     conn?.user?.jid,
     conn?.user?.id,
@@ -21,13 +22,28 @@ function getBotIds(conn) {
   const jids = new Set()
   const nums = new Set()
 
-  for (const id of raw) {
+  const addId = (id) => {
+    if (!id) return
     const s = String(id).trim()
     const base = s.includes(':') ? `${s.split(':')[0]}@${s.split('@')[1] || 's.whatsapp.net'}` : s
     jids.add(s)
     jids.add(base)
     const num = normalizeNum(s)
     if (num) nums.add(num)
+  }
+
+  for (const id of raw) addId(id)
+
+  if (Array.isArray(participants)) {
+    for (const p of participants) {
+      const pNum = normalizeNum(p?.phoneNumber || p?.jid || p?.id)
+      if (pNum && nums.has(pNum)) {
+        addId(p?.id)
+        addId(p?.lid)
+        addId(p?.jid)
+        addId(p?.phoneNumber)
+      }
+    }
   }
 
   return { jids, nums }
@@ -82,7 +98,7 @@ function ensureDbStructs(m, conn) {
   }
 }
 
-export async function before(m, { match, conn, isAdmin, isOwner, isROwner }) {
+export async function before(m, { conn, participants, isAdmin, isOwner, isROwner }) {
   if (!m.message || typeof m.text !== 'string') return false
   if (m.isBaileys || m.fromMe) return false
   if (m.chat === 'status@broadcast' || m.isChannel) return false
@@ -99,12 +115,16 @@ export async function before(m, { match, conn, isAdmin, isOwner, isROwner }) {
 
   const rawText = m.text.trim()
   if (!rawText) return false
-  if (match || (global.prefix && global.prefix.test(rawText))) return false
+
+  // No interceptar comandos con prefijo (# . ! / -)
+  const prefixRe = global.prefix instanceof RegExp ? global.prefix : COMMAND_PREFIX_RE
+  if (prefixRe.test(rawText) || COMMAND_PREFIX_RE.test(rawText)) return false
 
   // Evitar interferir con selecciones numéricas o juegos de una sola letra (#yts, #spotify, #ahorcado)
   if (/^(?:[av]?\d{1,2}|[a-z])$/i.test(rawText)) return false
 
-  const botIds = getBotIds(conn)
+  const groupParts = participants || conn?.chats?.[m.chat]?.participants || []
+  const botIds = getBotIds(conn, groupParts)
   const mentionedList = Array.isArray(m.mentionedJid) ? m.mentionedJid : []
   const isMentioned =
     mentionedList.some((j) => matchesBotId(j, botIds)) ||
@@ -112,14 +132,14 @@ export async function before(m, { match, conn, isAdmin, isOwner, isROwner }) {
 
   const quotedId = m.quoted?.id || m.quoted?.key?.id || ''
   const isQuotedBot = Boolean(m.quoted && (m.quoted.fromMe || matchesBotId(m.quoted.sender, botIds)))
-  const isReplyToAi = Boolean(isQuotedBot && quotedId && isBotAiMessage(quotedId))
+  const isReplyToAi = Boolean((quotedId && isBotAiMessage(quotedId)) || isQuotedBot)
 
   const chatbotEnabled = Boolean(chat.fChatgp || botSettings.fAiBot)
   const aiAllowed = chat.fAis !== false
 
   const shouldRespond = chatbotEnabled
     ? rawText.length >= 2 || isMentioned || isReplyToAi
-    : aiAllowed && (isMentioned || isReplyToAi)
+    : aiAllowed && (isMentioned || (quotedId && isBotAiMessage(quotedId)))
 
   if (!shouldRespond) return false
 
@@ -164,7 +184,6 @@ let handler = async (m, { conn, args, text, usedPrefix, command, isAdmin, isOwne
   const ownerAccess = Boolean(isOwner || isROwner || esOwnerManual(m, conn))
   const canToggle = !m.isGroup || Boolean(isAdmin) || ownerAccess
   const sub = (args[0] || '').toLowerCase()
-
   const isSingleWordControl = command !== 'bot' || args.length <= 1
 
   if (isSingleWordControl && (sub === 'on' || sub === 'activar' || sub === 'enable' || sub === '1')) {
