@@ -13,7 +13,7 @@ let opciones = `· ┄ · ⊸ 𔓕 *Ajustes : Settings*
 
 \t📍 Puedes desactivar o activar comandos segun tu preferencia.
 
-\t＃ *Funciones* : *17* results
+\t＃ *Funciones* : *19* results
 \t＃ *Tipo* : admins
 
 \t⚶ Ejemplo de uso:
@@ -32,6 +32,7 @@ ${readMore}
 ⧡ *${usedPrefix}on/off* grupos
 ⧡ *${usedPrefix}on/off* rpg
 ⧡ *${usedPrefix}on/off* ia
+⧡ *${usedPrefix}on/off* chatbot
 ⧡ *${usedPrefix}on/off* ajustes
 ⧡ *${usedPrefix}on/off* logos
 ⧡ *${usedPrefix}on/off* random
@@ -166,6 +167,19 @@ throw false
 }
 }
 chat.fAis = isEnable
+break
+
+case 'chatbot':
+case 'autoresponder':
+case 'aibot':
+case 'chatia':
+if (m.isGroup) {
+if (!(isAdmin || isOwner)) {
+global.dfail('admin', m, conn)
+throw false
+}
+}
+chat.fChatgp = isEnable
 break
 
 case 'info':

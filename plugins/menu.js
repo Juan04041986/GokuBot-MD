@@ -45,9 +45,15 @@ let menu = `
 │ ➤ ${usedPrefix}add <numero>
 *╰────────────*
 
-*╭─「 IA 」*
+*╭─「 IA & CHATBOT 」*
 │ ➤ ${usedPrefix}chatgpt <texto>
+│ ➤ ${usedPrefix}ia <texto>
+│ ➤ ${usedPrefix}claude <texto>
+│ ➤ ${usedPrefix}dolphin <texto>
 │ ➤ ${usedPrefix}imagina <texto>
+│ ➤ ${usedPrefix}voz <texto>=<voz>
+│ ➤ ${usedPrefix}bot <texto>
+│ ➤ ${usedPrefix}chatbot on/off
 *╰────────────*
 
 *╭─「 RPG 」*

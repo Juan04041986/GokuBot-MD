@@ -311,7 +311,7 @@ restrict: true,
 fJadi: false,
 fPrivado: false,
 autoread: false,
-iautoread2: false,
+autoread2: false,
 restrict: false,
 fTemporal: false,
 fCountrys: false,
@@ -545,9 +545,10 @@ m.plugin = name
 if (m.chat in global.db.data.chats || m.sender in global.db.data.users) {
 let chat = global.db.data.chats[m.chat]
 let user = global.db.data.users[m.sender]
-if (!['owner-unbanchat.js'].includes(name) && chat && chat.isBanned && !isROwner) return
+if (!['owner-unbanchat.js', 'a-bot.js'].includes(name) && chat && chat.isBanned && !isROwner) return
 if (
 name != 'owner-unbanchat.js' &&
+name != 'a-bot.js' &&
 name != 'owner-exec.js' &&
 name != 'owner-exec2.js' &&
 name != 'tool-delete.js' &&
