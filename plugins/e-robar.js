@@ -33,7 +33,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
     return conn.sendMessage(m.chat, { text: panel('🕶️ ROBAR', ['🐉 ¿Robarle al propio *GokuBot*? Ni lo intentes.'], sign()) }, { quoted: m })
 
   const cd = cooldown(u, 'robar', 8 * MS.m)
-  if (!cd.ok) return conn.sendMessage(m.chat, { text: waitPanel(u, 'ROBAR', cd.left, 'Busca otra víctima más tarde 😈') }, { quoted: m })
+  if (!cd.ok) return conn.sendMessage(m.chat, { text: waitPanel(u, '🕶️ ROBAR', cd.left, 'Busca otra víctima más tarde 😈') }, { quoted: m })
 
   const v = getUser(victim)
   if (!v) return

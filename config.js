@@ -55,6 +55,7 @@ global.textbot = "« ᴀɪ-ᴅʀɪᴠᴇɴ ᴡʜᴀᴛsᴀᴘᴘ ᴇxᴘᴇʀɪ�
 global.gokuImg = "https://od.lk/s/NTZfNDc2MzMxMDJf/menu2_GokuBot.jpg"
 global.gokuMenu = "https://od.lk/s/NTZfNDc2MzMwOTdf/menu_GokuBot.jpg"
 global.currency = "GokuCoins"
+global.brandEco = "𝐏𝐮𝐧𝐢𝐬𝐡𝐞𝐫 𝐃𝐞𝐯" // firma de los comandos de economía
 global.currency2 = "Tickes"
 global.emoji = "🐲"
 global.toem = "🐉"

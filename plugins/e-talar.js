@@ -8,7 +8,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
     cdMs: 5 * MS.m,
     item: 'hacha',
     dangerChance: 10,
-    waitTip: 'Compra una #motosierra en la tienda... o sea, #comprar hacha.',
+    waitTip: p => `Compra una *Motosierra de Bulma* con *${p}comprar hacha* y ganas +45%.`,
     loot: [
       { w: 26, text: '🌿 Solo juntaste *ramitas* secas', coins: [110, 250], ticks: [3, 8] },
       { w: 22, text: '🪵 Cortaste un *tronco* de pino', coins: [250, 430], ticks: [5, 12] },

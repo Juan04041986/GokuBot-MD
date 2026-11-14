@@ -57,7 +57,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
     const cd = cooldown(u, 'cofre', 3 * MS.h)
     if (!cd.ok) {
       return conn.sendMessage(m.chat, {
-        text: waitPanel(u, 'COFRE', cd.left, `Puedes comprar uno cuando quieras con *${usedPrefix}comprar cofre*.`)
+        text: waitPanel(u, '🎁 COFRE', cd.left, `Puedes comprar uno cuando quieras con *${usedPrefix}comprar cofre*.`)
       }, { quoted: m })
     }
   }

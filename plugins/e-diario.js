@@ -11,7 +11,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
 
   if (!cd.ok) {
     return conn.sendMessage(m.chat, {
-      text: waitPanel(u, 'DIARIO', cd.left, `Racha actual: *${u.eco.streak.daily} día(s)* 🔥`)
+      text: waitPanel(u, '🎁 DIARIO', cd.left, `Racha actual: *${u.eco.streak.daily} día(s)* 🔥`)
     }, { quoted: m })
   }
 
