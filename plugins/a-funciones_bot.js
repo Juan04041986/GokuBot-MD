@@ -31,6 +31,7 @@ ${readMore}
 ⧡ *${usedPrefix}on/off* autosticker
 ⧡ *${usedPrefix}on/off* grupos
 ⧡ *${usedPrefix}on/off* rpg
+⧡ *${usedPrefix}on/off* economia
 ⧡ *${usedPrefix}on/off* ia
 ⧡ *${usedPrefix}on/off* chatbot
 ⧡ *${usedPrefix}on/off* ajustes
@@ -149,6 +150,8 @@ chat.fJuegos = isEnable
 break
 
 case 'rpg':
+case 'economía':
+case 'economia':
 if (m.isGroup) {
 if (!(isAdmin || isOwner)) {
 global.dfail('admin', m, conn)

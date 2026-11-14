@@ -56,24 +56,41 @@ let menu = `
 │ ➤ ${usedPrefix}chatbot on/off
 *╰────────────*
 
-*╭─「 RPG 」*
+*╭─「 ECONOMÍA 」*
+│ ➤ ${usedPrefix}eco
+│ ➤ ${usedPrefix}coins
+│ ➤ ${usedPrefix}diario
+│ ➤ ${usedPrefix}trabajar
 │ ➤ ${usedPrefix}minar
 │ ➤ ${usedPrefix}talar
+│ ➤ ${usedPrefix}pescar
 │ ➤ ${usedPrefix}cazar
-│ ➤ ${usedPrefix}work
-│ ➤ ${usedPrefix}coins
+│ ➤ ${usedPrefix}slut
+│ ➤ ${usedPrefix}crimen
+│ ➤ ${usedPrefix}robar @user
+│ ➤ ${usedPrefix}cofre
+│ ➤ ${usedPrefix}slot <apuesta>
+│ ➤ ${usedPrefix}apostar <cant> <op>
+│ ➤ ${usedPrefix}banco
+│ ➤ ${usedPrefix}pagar <cant> @user
+│ ➤ ${usedPrefix}topcoins
+│ ➤ ${usedPrefix}tienda
 *╰────────────*
 
 > *Goku Bot 🐉*
 `.trim()
 
-try {
-  let res = await fetch('https://cdn.dev-ander.xyz/file/9xgopy.jpg ')
-  let img = Buffer.from(await res.arrayBuffer())
-  await conn.sendMessage(m.chat, { image: img, caption: menu, mentions: [m.sender] }, { quoted: m })
-} catch {
-  await conn.sendMessage(m.chat, { text: menu, mentions: [m.sender] }, { quoted: m })
+const portadas = [global.gokuMenu, global.gokuImg, 'https://i.ibb.co/6P4gKQ0/goku.jpg'].filter(Boolean)
+for (const url of portadas) {
+  try {
+    const res = await fetch(url)
+    if (!res.ok) continue
+    const img = Buffer.from(await res.arrayBuffer())
+    if (img.length < 1000) continue
+    return conn.sendMessage(m.chat, { image: img, caption: menu, mentions: [m.sender] }, { quoted: m })
+  } catch {}
 }
+await conn.sendMessage(m.chat, { text: menu, mentions: [m.sender] }, { quoted: m })
 }
 
 handler.help = ['menu']
