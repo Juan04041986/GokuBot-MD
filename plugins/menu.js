@@ -57,7 +57,7 @@ let handler = async (m, { conn, usedPrefix }) => {
     ['DRAGON BALL', ['biografiagoku', 'biografiavegeta', 'biografiagohan', 'noticiasdragonball']],
     ['DESCARGAS', ['play', 'ytmp3', 'ytmp4', 'tiktok', 'instagram', 'facebook', 'spotify']],
     ['BUSQUEDAS', ['google', 'imagen', 'yts']],
-    ['GRUPOS', ['link', 'invocar', 'kick', 'add']],
+    ['GRUPOS', ['link', 'join', 'invocar', 'kick', 'add']],
     ['IA & CHATBOT', ['chatgpt', 'ia', 'claude', 'dolphin', 'imagina', 'voz', 'bot', 'chatbot']],
     ['ECONOMÍA', ['eco', 'coins', 'diario', 'trabajar', 'minar', 'talar', 'pescar', 'cazar', 'slut', 'crimen', 'robar', 'cofre', 'slot', 'apostar', 'banco', 'pagar', 'topcoins', 'tienda']]
   ]
