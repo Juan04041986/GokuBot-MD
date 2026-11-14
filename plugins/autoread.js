@@ -24,11 +24,19 @@ export async function markRead(conn, m) {
     ok = true
   } catch {
     try {
-      if (typeof conn.sendReadReceipt === 'function') {
-        await conn.sendReadReceipt(key.remoteJid, key.participant, [key.id])
+      if (typeof conn.sendReceipt === 'function') {
+        await conn.sendReceipt(key.remoteJid, key.participant, [key.id], 'read')
         ok = true
       }
     } catch {}
+    if (!ok) {
+      try {
+        if (typeof conn.sendReadReceipt === 'function') {
+          await conn.sendReadReceipt(key.remoteJid, key.participant, [key.id])
+          ok = true
+        }
+      } catch {}
+    }
   }
 
   try {
@@ -64,7 +72,8 @@ export const chatSettings = m => {
 /** ¿Está activo el autoread global? (compatible con claves viejas) */
 export const globalAutoRead = conn => {
   const s = botSettings(conn)
-  return !!(s.autoread2 ?? s.autoread ?? s.autoRead)
+  // Cualquiera de las claves encendida = activo (se mantienen sincronizadas por el comando)
+  return !!(s.autoread2 || s.autoread || s.autoRead)
 }
 
 /** ¿Está activo el autoread para este chat? El chat manda sobre lo global */
@@ -213,5 +222,13 @@ let handler = async (m, { conn, args, usedPrefix, command, isAdmin, isOwner, isR
 handler.help = ['autoread [on|off|global on|global off|reset]']
 handler.tags = ['main']
 handler.command = ['autoread', 'autoleido', 'leido', 'visto']
+
+// El cargador (lib/plugins.js) solo conserva el export default,
+// así que el hook y los helpers se cuelgan como propiedades del handler.
+handler.before = before
+handler.markRead = markRead
+handler.autoReadEnabled = autoReadEnabled
+handler.globalAutoRead = globalAutoRead
+handler.setGlobalAutoRead = setGlobalAutoRead
 
 export default handler

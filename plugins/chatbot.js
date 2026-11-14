@@ -299,4 +299,8 @@ let handler = async (m, { conn, args, text, usedPrefix, command, isAdmin, isOwne
 
 handler.command = ['chatbot', 'autoresponder', 'bot']
 handler.tags = ['ia']
+// El cargador (lib/plugins.js) solo conserva el export default,
+// así que el hook se cuelga como propiedad del handler.
+handler.before = before
+
 export default handler

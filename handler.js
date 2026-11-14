@@ -384,6 +384,28 @@ if (opts['gconly'] && !m.chat.endsWith('g.us')) return
 if (opts['swonly'] && m.chat !== 'status@broadcast') return
 if (typeof m.text !== 'string') m.text = ''
 
+// ── AUTOREAD (se ejecuta SIEMPRE, sin depender de plugins) ──
+try {
+const settingsREAD = global.db.data.settings[this.user.jid] || {}
+const chatREAD = (global.db.data.chats && global.db.data.chats[m.chat]) || {}
+const autoReadON = typeof chatREAD.autoread === 'boolean'
+  ? chatREAD.autoread
+  : !!(settingsREAD.autoread2 || settingsREAD.autoread || settingsREAD.autoRead || opts['autoread'])
+if (autoReadON && m.key && m.chat && !m.fromMe && !String(m.chat).endsWith('@broadcast') && !String(m.chat).endsWith('@newsletter')) {
+const readKey = { remoteJid: m.chat, id: m.key.id, fromMe: false }
+const participant = m.key.participant || (m.isGroup ? m.sender : undefined)
+if (participant) readKey.participant = participant
+try {
+await this.readMessages([readKey])
+} catch {}
+try {
+await this.chatModify({ markRead: true, lastMessages: [{ key: readKey, messageTimestamp: m.messageTimestamp || Math.floor(Date.now() / 1000) }] }, m.chat)
+} catch {}
+}
+} catch (e) {
+console.error('[autoread]', e?.message || e)
+}
+
 m.exp += Math.ceil(Math.random() * 10)
 let usedPrefix
 let _user = global.db.data && global.db.data.users && global.db.data.users[m.sender]
@@ -754,14 +776,7 @@ if (!opts['noprint']) await (await import('./lib/print.js')).default(m, this)
 } catch (e) {
 console.log(m, m.quoted, e)
 }
-let settingsREAD = global.db.data.settings[this.user.jid] || {}
-const chatREAD = (global.db.data.chats && global.db.data.chats[m.chat]) || {}
-const autoReadON = typeof chatREAD.autoread === 'boolean'
-  ? chatREAD.autoread
-  : !!(settingsREAD.autoread2 || settingsREAD.autoread || settingsREAD.autoRead || opts['autoread'])
-if (autoReadON && m.key && !m.fromMe) {
-try { await this.readMessages([m.key]) } catch {}
-}
+
 
 if (db.data.chats[m.chat].reaction && m.text.match(/(ción|dad|aje|oso|izar|mente|pero|tion|age|ous|ate|and|but|ify)/gi)) {
 let emot = pickRandom(['🥵', '🥶', '🥳', '📍', '🐟', '🔥', '⏰', '⚔️', '✅' ])
