@@ -53,7 +53,7 @@ let handler = async (m, { conn, usedPrefix }) => {
 ╰──────────────────╯`.trim()
 
   const secciones = [
-    ['INFO', ['ping', 'estado', 'grupos', 'canal', 'restart']],
+    ['INFO', ['ping', 'estado', 'grupos', 'canal', 'restart', 'autoread']],
     ['DRAGON BALL', ['biografiagoku', 'biografiavegeta', 'biografiagohan', 'noticiasdragonball']],
     ['DESCARGAS', ['play', 'ytmp3', 'ytmp4', 'tiktok', 'instagram', 'facebook', 'spotify']],
     ['BUSQUEDAS', ['google', 'imagen', 'yts']],

@@ -755,9 +755,13 @@ if (!opts['noprint']) await (await import('./lib/print.js')).default(m, this)
 console.log(m, m.quoted, e)
 }
 let settingsREAD = global.db.data.settings[this.user.jid] || {}
-if (opts['autoread']) await this.readMessages([m.key])
-if (settingsREAD.autoread2) await this.readMessages([m.key])
-//if (settingsREAD.autoread2 == 'true') await this.readMessages([m.key])
+const chatREAD = (global.db.data.chats && global.db.data.chats[m.chat]) || {}
+const autoReadON = typeof chatREAD.autoread === 'boolean'
+  ? chatREAD.autoread
+  : !!(settingsREAD.autoread2 || settingsREAD.autoread || settingsREAD.autoRead || opts['autoread'])
+if (autoReadON && m.key && !m.fromMe) {
+try { await this.readMessages([m.key]) } catch {}
+}
 
 if (db.data.chats[m.chat].reaction && m.text.match(/(ción|dad|aje|oso|izar|mente|pero|tion|age|ous|ate|and|but|ify)/gi)) {
 let emot = pickRandom(['🥵', '🥶', '🥳', '📍', '🐟', '🔥', '⏰', '⚔️', '✅' ])
