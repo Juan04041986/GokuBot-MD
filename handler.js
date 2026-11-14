@@ -390,41 +390,16 @@ if (opts['gconly'] && !m.chat.endsWith('g.us')) return
 if (opts['swonly'] && m.chat !== 'status@broadcast') return
 if (typeof m.text !== 'string') m.text = ''
 
-// ── AUTOREAD (se ejecuta SIEMPRE, sin depender de plugins) ──
+// ── AUTOREAD (respaldo: el principal corre en messages.upsert desde index.js) ──
 try {
-const _settingsAll = (global.db.data.settings = global.db.data.settings || {})
-const _jids = [
-  this.user?.jid,
-  this.user?.id ? String(this.user.id).split(':')[0] + '@s.whatsapp.net' : null,
-  this.authState?.creds?.me?.id ? String(this.authState.creds.me.id).split(':')[0] + '@s.whatsapp.net' : null
-].filter(Boolean)
-let _settings = {}
-for (const _j of _jids) { if (_settingsAll[_j]) { _settings = _settingsAll[_j]; break } }
-// cualquier sesión con autoread encendida también cuenta (por si cambia el jid)
-const _anyOn = Object.values(_settingsAll).some(v => v && typeof v === 'object' && (v.autoread2 === true || v.autoread === true || v.autoRead === true))
-const _globalON = !!(_settings.autoread2 || _settings.autoread || _settings.autoRead || opts['autoread'] || global.autoreadGlobal || _anyOn)
-const _chat = (global.db.data.chats && global.db.data.chats[m.chat]) || {}
-const _chatVal = typeof _chat.autoread === 'boolean' ? _chat.autoread : null
-const autoReadON = _chatVal === null ? _globalON : _chatVal
-const _chatOk = m.chat && !String(m.chat).endsWith('@broadcast') && !String(m.chat).endsWith('@newsletter')
-if (autoReadON && _chatOk && !m.fromMe && m.key?.id) {
-const readKey = { remoteJid: m.chat, id: m.key.id, fromMe: false }
-const _part = m.key.participant || (m.isGroup ? m.sender : undefined)
-if (_part) readKey.participant = _part
-let _leido = false
-try { await this.readMessages([readKey]); _leido = true } catch (e1) {
-  try { if (typeof this.sendReceipt === 'function') { await this.sendReceipt(readKey.remoteJid, readKey.participant, [readKey.id], 'read'); _leido = true } } catch (e2) {
-    try { if (typeof this.sendReadReceipt === 'function') { await this.sendReadReceipt(readKey.remoteJid, readKey.participant, [readKey.id]); _leido = true } } catch (e3) {
-      global.autoreadError = String(e1?.message || e1)
-    }
-  }
-}
-try { await this.chatModify({ markRead: true, lastMessages: [{ key: readKey, messageTimestamp: m.messageTimestamp || Math.floor(Date.now() / 1000) }] }, m.chat) } catch {}
-global.autoreadLast = { ok: _leido, chat: m.chat, id: m.key.id, ts: Date.now() }
+if (!global.autoreadUpsertActive) {
+const { markRead } = await import('./lib/autoread-core.js')
+await markRead(this, m).catch(() => {})
 }
 } catch (e) {
 console.error('[autoread]', e?.message || e)
 }
+
 
 m.exp += Math.ceil(Math.random() * 10)
 let usedPrefix

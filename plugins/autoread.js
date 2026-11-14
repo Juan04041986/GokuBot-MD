@@ -1,92 +1,32 @@
 import { panel, sign, displayName } from '../lib/economia.js'
 
-/** Clave segura para marcar como leído (soporta grupos, LID y privados) */
-export function buildReadKey(m) {
-  const chat = m.chat || m.key?.remoteJid
-  const id = m.key?.id || m.id
-  if (!chat || !id) return null
-  if (chat.endsWith('@broadcast') || chat.endsWith('@newsletter')) return null
-  const key = { remoteJid: chat, id, fromMe: false }
-  const participant = m.key?.participant || (m.isGroup ? m.sender : undefined)
-  if (participant) key.participant = participant
-  return key
-}
+import {
+  markRead as coreMarkRead, resolveAutoRead, botSettings, chatSettingsOf,
+  autoReadLog, readKey as coreReadKey, resetAutoReadLog, isIgnoredChat
+} from '../lib/autoread-core.js'
 
-/** Marca un mensaje como leído (ticks azules + limpia el contador del chat) */
-export async function markRead(conn, m) {
-  const key = buildReadKey(m)
-  if (!key) return false
+export const markRead = (conn, m) => coreMarkRead(conn, m)
+export const readKey = (conn, key) => coreReadKey(conn, key)
+export const botSettingsOf = conn => botSettings(conn)
+export const chatSettings = m => chatSettingsOf(m?.chat)
 
-  let ok = false
-
-  try {
-    await conn.readMessages([key])
-    ok = true
-  } catch {
-    try {
-      if (typeof conn.sendReceipt === 'function') {
-        await conn.sendReceipt(key.remoteJid, key.participant, [key.id], 'read')
-        ok = true
-      }
-    } catch {}
-    if (!ok) {
-      try {
-        if (typeof conn.sendReadReceipt === 'function') {
-          await conn.sendReadReceipt(key.remoteJid, key.participant, [key.id])
-          ok = true
-        }
-      } catch {}
-    }
-  }
-
-  try {
-    if (typeof conn.chatModify === 'function')
-      await conn.chatModify({
-        markRead: true,
-        lastMessages: [{ key, messageTimestamp: m.messageTimestamp || Math.floor(Date.now() / 1000) }]
-      }, key.remoteJid)
-  } catch {}
-
-  return ok
-}
-
-export const botSettings = conn => {
-  if (!global.db?.data) return {}
-  if (!global.db.data.settings || typeof global.db.data.settings !== 'object') global.db.data.settings = {}
-  const jid = conn?.user?.jid || conn?.user?.id
-  if (!jid) return {}
-  if (!global.db.data.settings[jid] || typeof global.db.data.settings[jid] !== 'object')
-    global.db.data.settings[jid] = {}
-  return global.db.data.settings[jid]
-}
-
-export const chatSettings = m => {
-  if (!global.db?.data) return {}
-  if (!global.db.data.chats || typeof global.db.data.chats !== 'object') global.db.data.chats = {}
-  if (!m.chat) return {}
-  if (!global.db.data.chats[m.chat] || typeof global.db.data.chats[m.chat] !== 'object')
-    global.db.data.chats[m.chat] = {}
-  return global.db.data.chats[m.chat]
-}
-
-/** ¿Está activo el autoread global? (compatible con claves viejas) */
+/** ¿Está activo el autoread global? */
 export const globalAutoRead = conn => {
-  const s = botSettings(conn)
-  // Cualquiera de las claves encendida = activo (se mantienen sincronizadas por el comando)
-  if (s.autoread2 || s.autoread || s.autoRead) return true
-  // respaldo en memoria: funciona aunque el jid del bot cambie (LID/nuevo login)
-  if (global.autoreadGlobal === true) return true
-  // respaldo final: si alguna sesión guardada tiene el autoread encendido
-  const all = global.db?.data?.settings || {}
-  return Object.values(all).some(v => v && typeof v === 'object' && (v.autoread2 === true || v.autoread === true || v.autoRead === true))
+  const { on, source } = resolveAutoRead(conn, null)
+  if (source === 'memoria' || source === 'bot' || source === 'default') {
+    // si el chat actual no manda, el global es lo que devuelve resolveAutoRead sin chat
+    const s = botSettings(conn)
+    if (s.autoread2 === true || s.autoread === true || s.autoRead === true) return true
+    if (global.autoreadGlobal === true) return true
+    if (global.autoreadGlobal === false) return false
+    if (s.autoread2 === false || s.autoread === false || s.autoRead === false) return false
+    return true
+  }
+  return on
 }
 
-/** ¿Está activo el autoread para este chat? El chat manda sobre lo global */
-export const autoReadEnabled = (m, conn) => {
-  const chat = chatSettings(m)
-  if (typeof chat.autoread === 'boolean') return chat.autoread
-  return globalAutoRead(conn)
-}
+/** ¿Activo para este chat? Prioridad: chat > global */
+export const autoReadEnabled = (m, conn) => resolveAutoRead(conn, m?.chat).on
 
 export const setGlobalAutoRead = (conn, value) => {
   const s = botSettings(conn)
@@ -98,29 +38,8 @@ export const setGlobalAutoRead = (conn, value) => {
   return s.autoread2
 }
 
-/** Diagnóstico para saber por qué no marca leído */
-export const autoReadDebug = (m, conn) => {
-  const u = conn?.user || {}
-  const all = Object.keys(global.db?.data?.settings || {})
-  const me = u.jid || ''
-  return [
-    `🆔 *user.id:* ${u.id || 'nada'}`,
-    `📞 *user.jid:* ${u.jid || 'nada'}`,
-    `📞 *user.lid:* ${u.lid || 'nada'}`,
-    `⚙️ *settings guardados:* ${all.length ? all.map(j => j.split('@')[0]).join(', ') : 'ninguno'}`,
-    `🎯 *settings que leo:* ${me ? me.split('@')[0] : 'ninguno'}`,
-    `🔌 *readMessages:* ${typeof conn?.readMessages === 'function' ? 'sí' : 'NO'}`,
-    `🔌 *sendReceipt:* ${typeof conn?.sendReceipt === 'function' ? 'sí' : 'NO'}`,
-    `🔌 *sendReadReceipt:* ${typeof conn?.sendReadReceipt === 'function' ? 'sí' : 'NO'}`,
-    `🔌 *chatModify:* ${typeof conn?.chatModify === 'function' ? 'sí' : 'NO'}`,
-    `🌍 *global.autoreadGlobal:* ${global.autoreadGlobal === true ? 'on' : global.autoreadGlobal === false ? 'off' : 'sin definir'}`,
-    `📨 *último intento:* ${global.autoreadLast ? `${global.autoreadLast.ok ? '✅' : '❌'} ${global.autoreadLast.chat.split('@')[0]}` : 'ninguno'}`,
-    global.autoreadError ? `⚠️ *error:* ${global.autoreadError}` : null
-  ].filter(Boolean)
-}
-
 export const setChatAutoRead = (m, value) => {
-  const chat = chatSettings(m)
+  const chat = chatSettingsOf(m?.chat)
   chat.autoread = !!value
   return chat.autoread
 }
@@ -131,20 +50,48 @@ export const isDev = (m, { isROwner, isOwner } = {}) => {
   return (global.owner || []).some(o => String(Array.isArray(o) ? o[0] : o).replace(/[^0-9]/g, '').slice(-9) === num)
 }
 
+/** Diagnóstico detallado */
+export const autoReadDebug = (m, conn) => {
+  const u = conn?.user || {}
+  const all = Object.keys(global.db?.data?.settings || {})
+  const me = u.jid || ''
+  const log = autoReadLog()
+  const filasLog = log.length
+    ? log.slice(0, 5).map(l =>
+      l.ok
+        ? `✅ ${String(l.chat || '').split('@')[0]} · ${l.via}${l.src ? ` (${l.src})` : ''}`
+        : `• ${String(l.chat || '').split('@')[0]} · ${l.skip || l.error || 'sin detalle'}`
+    )
+    : ['sin mensajes procesados todavía']
+
+  return [
+    `🆔 *user.id:* ${u.id || 'nada'}`,
+    `📞 *user.jid:* ${u.jid || 'nada'}`,
+    `📞 *user.lid:* ${u.lid || 'nada'}`,
+    `⚙️ *settings guardados:* ${all.length ? all.map(j => j.split('@')[0]).join(', ') : 'ninguno'}`,
+    `🎯 *settings que leo:* ${me ? me.split('@')[0] : 'ninguno'}`,
+    `🔌 *readMessages:* ${typeof conn?.readMessages === 'function' ? 'sí' : 'NO'}`,
+    `🔌 *sendReceipt:* ${typeof conn?.sendReceipt === 'function' ? 'sí' : 'NO'}`,
+    `🔌 *sendReadReceipt:* ${typeof conn?.sendReadReceipt === 'function' ? 'sí' : 'NO'}`,
+    `🔌 *chatModify:* ${typeof conn?.chatModify === 'function' ? 'sí' : 'NO'}`,
+    `🛰️ *listener upsert:* ${global.autoreadUpsertActive ? 'activo' : 'NO (respaldo en handler)'}`,
+    `🌍 *global.autoreadGlobal:* ${global.autoreadGlobal === true ? 'on' : global.autoreadGlobal === false ? 'off' : 'sin definir'}`,
+    '',
+    '*📨 ÚLTIMOS INTENTOS:*',
+    ...filasLog
+  ].filter(Boolean)
+}
+
 // ─────────────────────────────────────────────────────────────
 // AUTOREAD AUTOMÁTICO
 // ─────────────────────────────────────────────────────────────
 export async function before(m, { conn }) {
-  if (!m?.message) return false
-  if (!m.chat) return false
+  if (!m?.message || !m.chat) return false
   if (m.fromMe) return false
+  if (global.autoreadUpsertActive) return false // el listener de index.js ya lo hizo
   if (!autoReadEnabled(m, conn)) return false
 
-  const delay = Number(botSettings(conn).autoreadDelay) || 0
-  const run = () => markRead(conn, m).catch(() => {})
-  if (delay > 0) setTimeout(run, delay)
-  else await run()
-
+  await markRead(conn, m).catch(() => {})
   return false
 }
 
