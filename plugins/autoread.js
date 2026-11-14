@@ -73,7 +73,12 @@ export const chatSettings = m => {
 export const globalAutoRead = conn => {
   const s = botSettings(conn)
   // Cualquiera de las claves encendida = activo (se mantienen sincronizadas por el comando)
-  return !!(s.autoread2 || s.autoread || s.autoRead)
+  if (s.autoread2 || s.autoread || s.autoRead) return true
+  // respaldo en memoria: funciona aunque el jid del bot cambie (LID/nuevo login)
+  if (global.autoreadGlobal === true) return true
+  // respaldo final: si alguna sesión guardada tiene el autoread encendido
+  const all = global.db?.data?.settings || {}
+  return Object.values(all).some(v => v && typeof v === 'object' && (v.autoread2 === true || v.autoread === true || v.autoRead === true))
 }
 
 /** ¿Está activo el autoread para este chat? El chat manda sobre lo global */
@@ -88,7 +93,30 @@ export const setGlobalAutoRead = (conn, value) => {
   s.autoread2 = !!value
   s.autoread = !!value
   s.autoRead = !!value
+  s.autoreadDefault = true
+  global.autoreadGlobal = !!value
   return s.autoread2
+}
+
+/** Diagnóstico para saber por qué no marca leído */
+export const autoReadDebug = (m, conn) => {
+  const u = conn?.user || {}
+  const all = Object.keys(global.db?.data?.settings || {})
+  const me = u.jid || ''
+  return [
+    `🆔 *user.id:* ${u.id || 'nada'}`,
+    `📞 *user.jid:* ${u.jid || 'nada'}`,
+    `📞 *user.lid:* ${u.lid || 'nada'}`,
+    `⚙️ *settings guardados:* ${all.length ? all.map(j => j.split('@')[0]).join(', ') : 'ninguno'}`,
+    `🎯 *settings que leo:* ${me ? me.split('@')[0] : 'ninguno'}`,
+    `🔌 *readMessages:* ${typeof conn?.readMessages === 'function' ? 'sí' : 'NO'}`,
+    `🔌 *sendReceipt:* ${typeof conn?.sendReceipt === 'function' ? 'sí' : 'NO'}`,
+    `🔌 *sendReadReceipt:* ${typeof conn?.sendReadReceipt === 'function' ? 'sí' : 'NO'}`,
+    `🔌 *chatModify:* ${typeof conn?.chatModify === 'function' ? 'sí' : 'NO'}`,
+    `🌍 *global.autoreadGlobal:* ${global.autoreadGlobal === true ? 'on' : global.autoreadGlobal === false ? 'off' : 'sin definir'}`,
+    `📨 *último intento:* ${global.autoreadLast ? `${global.autoreadLast.ok ? '✅' : '❌'} ${global.autoreadLast.chat.split('@')[0]}` : 'ninguno'}`,
+    global.autoreadError ? `⚠️ *error:* ${global.autoreadError}` : null
+  ].filter(Boolean)
 }
 
 export const setChatAutoRead = (m, value) => {
@@ -143,6 +171,35 @@ let handler = async (m, { conn, args, usedPrefix, command, isAdmin, isOwner, isR
   const chat = chatSettings(m)
   const chatOn = typeof chat.autoread === 'boolean' ? chat.autoread : null
   const efectivo = autoReadEnabled(m, conn)
+
+  // Diagnóstico: .autoread debug
+  if (tokens.includes('debug') || tokens.includes('info') || tokens.includes('estado')) {
+    return conn.sendMessage(m.chat, {
+      text: panel('🧪 AUTOREAD DEBUG', [
+        `🌍 *Global:* ${estado(globalOn)}`,
+        `💬 *Este chat:* ${chatOn === null ? 'herencia' : estado(chatOn)}`,
+        `⚡ *Efectivo:* ${estado(efectivo)}`,
+        '',
+        ...autoReadDebug(m, conn)
+      ], sign())
+    }, { quoted: m })
+  }
+
+  // Prueba real: marca ESTE mensaje como leído ahora mismo
+  if (tokens.includes('test') || tokens.includes('probar') || tokens.includes('prueba')) {
+    const ok = await markRead(conn, m)
+    return conn.sendMessage(m.chat, {
+      text: panel(ok ? '✅ AUTOREAD PROBADO' : '❌ NO SE PUDO MARCAR', [
+        ok
+          ? '👀 Este mensaje acaba de marcarse como *leído* (mira los ✓✓ azules).'
+          : '📌 La API del bot no aceptó la lectura.',
+        '',
+        ...autoReadDebug(m, conn),
+        '',
+        `💡 Si sale ❌, mandame este panel para revisarlo.`
+      ], sign())
+    }, { quoted: m })
+  }
 
   // Estado (sin argumentos válidos)
   if (!esReset && !tokOn && !tokOff) {
@@ -219,7 +276,7 @@ let handler = async (m, { conn, args, usedPrefix, command, isAdmin, isOwner, isR
   }, { quoted: m })
 }
 
-handler.help = ['autoread [on|off|global on|global off|reset]']
+handler.help = ['autoread [on|off|global on|global off|reset|test|debug]']
 handler.tags = ['main']
 handler.command = ['autoread', 'autoleido', 'leido', 'visto']
 
@@ -230,5 +287,6 @@ handler.markRead = markRead
 handler.autoReadEnabled = autoReadEnabled
 handler.globalAutoRead = globalAutoRead
 handler.setGlobalAutoRead = setGlobalAutoRead
+handler.autoReadDebug = autoReadDebug
 
 export default handler

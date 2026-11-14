@@ -77,8 +77,10 @@ global.db.data = {
 users: {},
 chats: {},
 settings: {},
+stats: {},
 ...(global.db.data || {}),
 };
+if (!global.db.data.stats || typeof global.db.data.stats !== 'object') global.db.data.stats = {};
 global.db.chain = chain(global.db.data);
 };
 loadDatabase(); 
