@@ -12,6 +12,7 @@ let menu = `
 │ ➤ ${usedPrefix}estado
 │ ➤ ${usedPrefix}grupos
 │ ➤ ${usedPrefix}canal
+│ ➤ ${usedPrefix}restart
 *╰────────────*
 
 *╭─「 DRAGON BALL 」*

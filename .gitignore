@@ -1,0 +1,19 @@
+# Dependencias
+node_modules/
+
+# Sesiones del bot
+Sessions/
+session/
+
+# Base de datos local
+database.json
+
+# Archivos de ejecución
+tmp/
+restart.log
+.restart-state.json
+npm-debug.log*
+.env
+
+# Sistema
+.DS_Store
