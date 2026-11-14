@@ -38,106 +38,53 @@ const fecha = () => {
   } catch { return '' }
 }
 
+// WhatsApp corta los captions de imagen en ~1024 caracteres
+const LIMITE_CAPTION = 1024
+
 let handler = async (m, { conn, usedPrefix }) => {
-  const nombre = displayName(m, conn)
+  const nombre = displayName(m, conn).slice(0, 24)
   const p = usedPrefix
   const hora = fecha()
 
-  const portada = `
-╭───〔 *🐉 GOKU BOT* 〕───╮
+  const cabecera = `╭───〔 *🐉 GOKU BOT* 〕───╮
 │ 👤 Usuario: ${nombre}
 │ 📌 Prefijo: ${p}
 │ 🕒 ${hora}
-╰──────────────────╯
+╰──────────────────╯`.trim()
 
-> ⚡ ${BRAND} ⚡`.trim()
+  const secciones = [
+    ['INFO', ['ping', 'estado', 'grupos', 'canal', 'restart']],
+    ['DRAGON BALL', ['biografiagoku', 'biografiavegeta', 'biografiagohan', 'noticiasdragonball']],
+    ['DESCARGAS', ['play', 'ytmp3', 'ytmp4', 'tiktok', 'instagram', 'facebook', 'spotify']],
+    ['BUSQUEDAS', ['google', 'imagen', 'yts']],
+    ['GRUPOS', ['link', 'invocar', 'kick', 'add']],
+    ['IA & CHATBOT', ['chatgpt', 'ia', 'claude', 'dolphin', 'imagina', 'voz', 'bot', 'chatbot']],
+    ['ECONOMÍA', ['eco', 'coins', 'diario', 'trabajar', 'minar', 'talar', 'pescar', 'cazar', 'slut', 'crimen', 'robar', 'cofre', 'slot', 'apostar', 'banco', 'pagar', 'topcoins', 'tienda']]
+  ]
 
-  const menu = `
-*╭─「 INFO 」*
-│ ➤ ${p}ping
-│ ➤ ${p}estado
-│ ➤ ${p}grupos
-│ ➤ ${p}canal
-│ ➤ ${p}restart
-*╰────────────*
+  // Formato compacto: cada categoría en un solo renglón para que TODO quepa en un mensaje
+  const cuerpo = secciones
+    .map(([titulo, cmds]) => `\n*⚡ ${titulo}*\n${cmds.map(c => p + c).join(' • ')}`)
+    .join('\n')
 
-*╭─「 DRAGON BALL 」*
-│ ➤ ${p}biografiagoku
-│ ➤ ${p}biografiavegeta
-│ ➤ ${p}biografiagohan
-│ ➤ ${p}biografiafreezer
-│ ➤ ${p}noticiasdragonball
-*╰────────────*
+  const pie = `\n\n> ⚡ ${BRAND} ⚡`
 
-*╭─「 DESCARGAS 」*
-│ ➤ ${p}play <texto>
-│ ➤ ${p}ytmp3 <link>
-│ ➤ ${p}ytmp4 <link>
-│ ➤ ${p}tiktok <link>
-│ ➤ ${p}instagram <link>
-│ ➤ ${p}facebook <link>
-│ ➤ ${p}spotify <link>
-*╰────────────*
-
-*╭─「 BUSQUEDAS 」*
-│ ➤ ${p}google <texto>
-│ ➤ ${p}imagen <texto>
-│ ➤ ${p}yts <texto>
-*╰────────────*
-
-*╭─「 GRUPOS 」*
-│ ➤ ${p}link
-│ ➤ ${p}invocar <texto>
-│ ➤ ${p}kick @user
-│ ➤ ${p}add <numero>
-*╰────────────*
-
-*╭─「 IA & CHATBOT 」*
-│ ➤ ${p}chatgpt <texto>
-│ ➤ ${p}ia <texto>
-│ ➤ ${p}claude <texto>
-│ ➤ ${p}dolphin <texto>
-│ ➤ ${p}imagina <texto>
-│ ➤ ${p}voz <texto>=<voz>
-│ ➤ ${p}bot <texto>
-│ ➤ ${p}chatbot on/off
-*╰────────────*
-
-*╭─「 ECONOMÍA 」*
-│ ➤ ${p}eco
-│ ➤ ${p}coins
-│ ➤ ${p}diario
-│ ➤ ${p}trabajar
-│ ➤ ${p}minar
-│ ➤ ${p}talar
-│ ➤ ${p}pescar
-│ ➤ ${p}cazar
-│ ➤ ${p}slut
-│ ➤ ${p}crimen
-│ ➤ ${p}robar @user
-│ ➤ ${p}cofre
-│ ➤ ${p}slot <apuesta>
-│ ➤ ${p}apostar <cant> <op>
-│ ➤ ${p}banco
-│ ➤ ${p}pagar <cant> @user
-│ ➤ ${p}topcoins
-│ ➤ ${p}tienda
-*╰────────────*
-
-> *Goku Bot 🐉*
-
-> ⚡ ${BRAND} ⚡`.trim()
+  const todo = `${cabecera}\n${cuerpo}${pie}`
 
   const cover = await getCover()
+  const mimetype = !cover ? null : cover[0] === 0xff ? 'image/jpeg' : cover[0] === 0x89 ? 'image/png' : 'image/webp'
 
-  if (cover)
-    await conn.sendMessage(m.chat, {
-      image: cover,
-      mimetype: cover[0] === 0xff ? 'image/jpeg' : cover[0] === 0x89 ? 'image/png' : 'image/webp',
-      caption: portada
-    }, { quoted: m }).catch(() => {})
+  // 1) Todo en un solo mensaje (imagen + menú completo)
+  if (cover && todo.length <= LIMITE_CAPTION)
+    return conn.sendMessage(m.chat, { image: cover, mimetype, caption: todo }, { quoted: m })
 
-  await conn.sendMessage(m.chat, { text: cover ? menu : `${portada}\n\n${menu}` }, { quoted: m })
+  // 2) Si no hay imagen, todo en un solo texto
+  if (!cover)
+    return conn.sendMessage(m.chat, { text: todo }, { quoted: m })
+
+  // 3) Respaldo: nombre muy largo o menú gigante -> portada corta + menú
+  await conn.sendMessage(m.chat, { image: cover, mimetype, caption: cabecera + pie }, { quoted: m }).catch(() => {})
+  return conn.sendMessage(m.chat, { text: `${cuerpo}${pie}`.trim() }, { quoted: m })
 }
 
 handler.help = ['menu']
