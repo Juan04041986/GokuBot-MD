@@ -286,13 +286,6 @@ if (!("self" in settings)) settings.self = false
 if (!("restrict" in settings)) settings.restrict = true
 if (!("fJadi" in settings)) settings.fJadi = false
 if (!("fPrivado" in settings)) settings.fPrivado = false
-if (!('autoread' in settings)) settings.autoread = true
-if (!('autoread2' in settings)) settings.autoread2 = true
-if (!('autoreadDefault' in settings) && !settings.autoread && !settings.autoread2) {
-settings.autoread = true
-settings.autoread2 = true
-settings.autoreadDefault = true
-}
 if (!('restrict' in settings)) settings.restrict = false
 if (!('fTemporal' in settings)) settings.fTemporal = false
 if (!('fCountrys' in settings)) settings.fCountrys = false
@@ -315,9 +308,6 @@ self: false,
 restrict: true,
 fJadi: false,
 fPrivado: false,
-autoread: true,
-autoread2: true,
-autoreadDefault: true,
 restrict: false,
 fTemporal: false,
 fCountrys: false,
@@ -390,15 +380,6 @@ if (opts['gconly'] && !m.chat.endsWith('g.us')) return
 if (opts['swonly'] && m.chat !== 'status@broadcast') return
 if (typeof m.text !== 'string') m.text = ''
 
-// ── AUTOREAD (respaldo: el principal corre en messages.upsert desde index.js) ──
-try {
-if (!global.autoreadUpsertActive) {
-const { markRead } = await import('./lib/autoread-core.js')
-await markRead(this, m).catch(() => {})
-}
-} catch (e) {
-console.error('[autoread]', e?.message || e)
-}
 
 
 m.exp += Math.ceil(Math.random() * 10)

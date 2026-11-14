@@ -38,7 +38,6 @@ ${readMore}
 ⧡ *${usedPrefix}on/off* logos
 ⧡ *${usedPrefix}on/off* random
 ⧡ *${usedPrefix}on/off* react
-⧡ *${usedPrefix}on/off* autoread
 ⧡ *${usedPrefix}on/off* owners
 
 > ${textbot}`
@@ -161,28 +160,6 @@ throw false
 }
 chat.fRpg = isEnable
 break
-
-case 'autoread':
-case 'autoleido':
-case 'leido':
-case 'visto': {
-if (m.isGroup) {
-if (!(isAdmin || isOwner)) {
-global.dfail('admin', m, conn)
-throw false
-}
-chat.autoread = isEnable
-break
-}
-if (!(isOwner || isROwner)) {
-global.dfail('owner', m, conn)
-throw false
-}
-bot.autoread2 = isEnable
-bot.autoread = isEnable
-bot.autoRead = isEnable
-break
-}
 
 case 'ia':
 case 'inteligencia':

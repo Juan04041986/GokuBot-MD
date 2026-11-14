@@ -20,7 +20,6 @@ import { Boom } from '@hapi/boom'
 import { makeWASocket, protoType, serialize } from './lib/simple.js'
 import { Low, JSONFile } from 'lowdb'
 import store from './lib/store.js'
-import { autoReadUpsert } from './lib/autoread-core.js'
 const { proto } = (await import('@whiskeysockets/baileys')).default
 import pkg from 'google-libphonenumber'
 const { PhoneNumberUtil } = pkg
@@ -227,7 +226,6 @@ isInit = true
 }
 if (!isInit) {
 conn.ev.off('messages.upsert', conn.handler)
-if (conn.autoReadHandler) conn.ev.off('messages.upsert', conn.autoReadHandler)
 conn.ev.off('connection.update', conn.connectionUpdate)
 conn.ev.off('creds.update', conn.credsUpdate)
 }
@@ -241,9 +239,6 @@ const chats = Object.entries(conn.chats).filter(([jid, chat]) => !jid.endsWith('
 } else {
 const chats = Object.entries(conn.chats).filter(([jid, chat]) => !jid.endsWith('@g.us') && chat.isChats).map((v) => v[0])
 }
-global.autoreadUpsertActive = true
-conn.autoReadHandler = (u) => autoReadUpsert(global.conn, u)
-conn.ev.on('messages.upsert', conn.autoReadHandler)
 conn.ev.on('messages.upsert', conn.handler)
 conn.ev.on('connection.update', conn.connectionUpdate)
 conn.ev.on('creds.update', conn.credsUpdate)
