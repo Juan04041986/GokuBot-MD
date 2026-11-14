@@ -1,5 +1,5 @@
 import {
-  currency, fmt, panel, sign, parseAmount, getUser, isGroupEnabled, disabledPanel, addMoney
+  currency, fmt, panel, sign, parseAmount, getUser, isGroupEnabled, disabledPanel, addMoney, displayName
 } from '../lib/economia.js'
 
 const DICE = ['⚀', '⚁', '⚂', '⚃', '⚄', '⚅']
@@ -94,7 +94,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
 
   return conn.sendMessage(m.chat, {
     text: panel('🎲 APOSTAR', [
-      `👤 *Usuario:* @${String(m.sender).split('@')[0]}`,
+      `👤 *Usuario:* ${displayName(m, conn)}`,
       '',
       detail,
       '',
@@ -104,8 +104,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
       win ? `🪙 *Ganancia:* +${fmt(bet * mult)} ${currency()} (x${mult})` : `💸 *Pérdida:* ${fmt(bet)} ${currency()}`,
       '',
       `🪙 *Cartera:* ${fmt(u.torucoin)} ${currency()}`
-    ], sign()),
-    mentions: [m.sender]
+    ], sign())
   }, { quoted: m })
 }
 

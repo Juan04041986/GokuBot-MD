@@ -1,6 +1,6 @@
 import {
   MS, currency, fmt, panel, sign, pick, randInt, pickWeighted, cooldown, human,
-  getUser, waitPanel, countItem, useItem, addItem, addMoney
+  getUser, waitPanel, countItem, useItem, addItem, addMoney, displayName
 } from '../lib/economia.js'
 
 const RARITY = {
@@ -78,7 +78,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
 
   return conn.sendMessage(m.chat, {
     text: panel('🎁 COFRE', [
-      `👤 *Usuario:* @${String(m.sender).split('@')[0]}`,
+      `👤 *Usuario:* ${displayName(m, conn)}`,
       `🏷️ *Rareza:* ${RARITY[rarity].label}`,
       `🔓 *Fuente:* ${inStock ? 'Cofre comprado' : 'Cofre gratis (cada 3h)'}`,
       '',
@@ -97,8 +97,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
       `🪙 *Cartera:* ${fmt(u.torucoin)} ${currency()}`,
       `🎒 *Cofres guardados:* ${fmt(countItem(u, 'cofre'))}`,
       inStock ? null : `⏳ *Próximo gratis:* en ${human(3 * MS.h)}`
-    ], sign()),
-    mentions: [m.sender]
+    ], sign())
   }, { quoted: m })
 }
 

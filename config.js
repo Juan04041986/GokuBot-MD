@@ -56,6 +56,7 @@ global.gokuImg = "https://od.lk/s/NTZfNDc2MzMxMDJf/menu2_GokuBot.jpg"
 global.gokuMenu = "https://od.lk/s/NTZfNDc2MzMwOTdf/menu_GokuBot.jpg"
 global.currency = "GokuCoins"
 global.brandEco = "𝐏𝐮𝐧𝐢𝐬𝐡𝐞𝐫 𝐃𝐞𝐯" // firma de los comandos de economía
+global.ownerName = "Punisher" // nombre que se muestra cuando el owner usa el bot desde su propio WhatsApp
 global.currency2 = "Tickes"
 global.emoji = "🐲"
 global.toem = "🐉"

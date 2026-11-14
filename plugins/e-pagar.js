@@ -1,5 +1,5 @@
 import {
-  currency, fmt, panel, sign, parseAmount, getUser, targetJid, addMoney
+  currency, fmt, panel, sign, parseAmount, getUser, targetJid, addMoney, displayName
 } from '../lib/economia.js'
 
 let handler = async (m, { conn, usedPrefix, command, args }) => {
@@ -46,7 +46,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
 
   return conn.sendMessage(m.chat, {
     text: panel('💸 TRANSFERENCIA', [
-      `📤 *De:* @${String(m.sender).split('@')[0]}`,
+      `📤 *De:* ${displayName(m, conn)}`,
       `📥 *Para:* @${targetNum}`,
       '',
       `🪙 *Monto:* ${fmt(amount)} ${currency()}`,
@@ -54,7 +54,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
       `🪙 *Tu cartera:* ${fmt(u.torucoin)} ${currency()}`,
       `👛 *Su cartera:* ${fmt(v.torucoin)} ${currency()}`
     ], sign()),
-    mentions: [m.sender, target]
+    mentions: [target]
   }, { quoted: m })
 }
 

@@ -1,5 +1,5 @@
 import {
-  currency, fmt, panel, sign, parseAmount, getUser, walletRows, total
+  currency, fmt, panel, sign, parseAmount, getUser, walletRows, total, displayName
 } from '../lib/economia.js'
 
 let handler = async (m, { conn, usedPrefix, command, args }) => {
@@ -76,7 +76,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
 
   return conn.sendMessage(m.chat, {
     text: panel('🏦 BANCO DE GOKUBOT', [
-      `👤 *Usuario:* @${String(m.sender).split('@')[0]}`,
+      `👤 *Usuario:* ${displayName(m, conn)}`,
       '',
       `🪙 *Cartera:* ${fmt(u.torucoin)} ${currency()}`,
       `🏦 *Banco:* ${fmt(u.bank)} ${currency()}`,
@@ -88,8 +88,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
       `⧡ ${usedPrefix}coins para ver tu cartera`,
       '',
       '🛡️ El banco protege tu dinero de los robos.'
-    ], sign()),
-    mentions: [m.sender]
+    ], sign())
   }, { quoted: m })
 }
 

@@ -1,5 +1,5 @@
 import {
-  currency, fmt, panel, sign, getUser, walletRows, total, human, MS, canUse
+  currency, fmt, panel, sign, getUser, walletRows, total, human, MS, canUse, displayName
 } from '../lib/economia.js'
 
 let handler = async (m, { conn, usedPrefix }) => {
@@ -17,7 +17,7 @@ let handler = async (m, { conn, usedPrefix }) => {
   const trabajar = canUse(u, 'trabajar', 30 * MS.m)
 
   const rows = [
-    ...walletRows(u, `@${String(m.sender).split('@')[0]}`),
+    ...walletRows(u, displayName(m, conn)),
     '',
     '*📊 ESTADO:*',
     `🏆 *Posición:* ${position > 0 ? `#${position}` : 'sin ranking'} de ${fmt(ranking.length)}`,
@@ -33,8 +33,7 @@ let handler = async (m, { conn, usedPrefix }) => {
   ]
 
   return conn.sendMessage(m.chat, {
-    text: panel('🪙 MI CARTERA', rows, sign()),
-    mentions: [m.sender]
+    text: panel('🪙 MI CARTERA', rows, sign())
   }, { quoted: m })
 }
 

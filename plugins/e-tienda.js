@@ -1,9 +1,9 @@
 import {
-  currency, fmt, panel, sign, getUser, ITEMS, addItem, countItem, itemName
+  currency, fmt, panel, sign, getUser, ITEMS, addItem, countItem, itemName, displayName
 } from '../lib/economia.js'
 
-const listShop = (u, usedPrefix, jid) => {
-  const rows = [`👤 *Usuario:* @${String(jid || '').split('@')[0]}`, '']
+const listShop = (u, usedPrefix, name) => {
+  const rows = [`👤 *Usuario:* ${name}`, '']
   rows.push('*⚶ ARTÍCULOS EN VENTA:*')
   for (const [key, item] of Object.entries(ITEMS)) {
     rows.push(`${item.emoji} *${item.name}*`)
@@ -22,7 +22,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
   const action = ['inventario', 'inv', 'mochila', 'items'].includes(command) ? 'inventario' : 'tienda'
 
   if (action === 'inventario') {
-    const rows = [`👤 *Usuario:* @${String(m.sender).split('@')[0]}`, '', '*🎒 TU MOCHILA:*']
+    const rows = [`👤 *Usuario:* ${displayName(m, conn)}`, '', '*🎒 TU MOCHILA:*']
     let any = false
     for (const key of Object.keys(ITEMS)) {
       const n = countItem(u, key)
@@ -33,8 +33,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
     if (!any) rows.push('📦 Está vacía... compra algo con *#tienda*.')
     rows.push('', `🪙 *Cartera:* ${fmt(u.torucoin)} ${currency()}`)
     return conn.sendMessage(m.chat, {
-      text: panel('🎒 INVENTARIO', rows, sign()),
-      mentions: [m.sender]
+      text: panel('🎒 INVENTARIO', rows, sign())
     }, { quoted: m })
   }
 
@@ -43,8 +42,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
 
   if (!itemKey || !ITEMS[itemKey]) {
     return conn.sendMessage(m.chat, {
-      text: listShop(u, usedPrefix, m.sender),
-      mentions: [m.sender]
+      text: listShop(u, usedPrefix, displayName(m, conn))
     }, { quoted: m })
   }
 
@@ -67,7 +65,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
 
   return conn.sendMessage(m.chat, {
     text: panel('🛒 COMPRA EXITOSA', [
-      `👤 *Comprador:* @${String(m.sender).split('@')[0]}`,
+      `👤 *Comprador:* ${displayName(m, conn)}`,
       '',
       `${item.emoji} *${itemName(itemKey)}* x${qty}`,
       `💵 *Pagado:* ${fmt(cost)} ${currency()}`,
@@ -77,8 +75,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
       `🪙 *Cartera:* ${fmt(u.torucoin)} ${currency()}`,
       '',
       '⚶ El artículo se usa automáticamente en su comando.'
-    ], sign()),
-    mentions: [m.sender]
+    ], sign())
   }, { quoted: m })
 }
 

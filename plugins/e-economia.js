@@ -1,5 +1,5 @@
 import {
-  currency, fmt, panel, sign, getUser, total, human, MS, canUse, countItem, ITEMS
+  currency, fmt, panel, sign, getUser, total, human, MS, canUse, countItem, ITEMS, displayName
 } from '../lib/economia.js'
 
 let handler = async (m, { conn, usedPrefix }) => {
@@ -13,7 +13,7 @@ let handler = async (m, { conn, usedPrefix }) => {
   const minar = canUse(u, 'minar', 5 * MS.m)
 
   const header = panel('🪙 ECONOMÍA', [
-    `👤 *Usuario:* @${String(m.sender).split('@')[0]}`,
+    `👤 *Usuario:* ${displayName(m, conn)}`,
     `🪙 *Cartera:* ${fmt(u.torucoin)} ${currency()}`,
     `🏦 *Banco:* ${fmt(u.bank)} ${currency()}`,
     `💰 *Patrimonio:* ${fmt(total(u))} ${currency()}`,
@@ -53,8 +53,7 @@ let handler = async (m, { conn, usedPrefix }) => {
   ], sign())
 
   return conn.sendMessage(m.chat, {
-    text: [header, trabajos, banca, suerte].join('\n\n'),
-    mentions: [m.sender]
+    text: [header, trabajos, banca, suerte].join('\n\n')
   }, { quoted: m })
 }
 

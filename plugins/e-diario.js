@@ -1,5 +1,5 @@
 import {
-  MS, currency, fmt, panel, sign, randInt, human, getUser, canUse, waitPanel, addItem, ITEMS
+  MS, currency, fmt, panel, sign, randInt, human, getUser, canUse, waitPanel, addItem, ITEMS, displayName
 } from '../lib/economia.js'
 
 let handler = async (m, { conn, usedPrefix, command }) => {
@@ -40,7 +40,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
 
   return conn.sendMessage(m.chat, {
     text: panel('🎁 RECOMPENSA DIARIA', [
-      `👤 *Usuario:* @${String(m.sender).split('@')[0]}`,
+      `👤 *Usuario:* ${displayName(m, conn)}`,
       `🔥 *Racha:* ${streak} día(s) ${keepStreak ? '(se mantiene)' : '(reiniciada)'}`,
       '',
       '🐉 Shenron escuchó tu llamado...',
@@ -54,8 +54,7 @@ let handler = async (m, { conn, usedPrefix, command }) => {
       `🪙 *Total ganado:* +${fmt(coins)} ${currency()}`,
       `🪙 *Cartera:* ${fmt(u.torucoin)} ${currency()}`,
       `⏳ *Próximo diario:* en ${human(24 * MS.h)}`
-    ], sign()),
-    mentions: [m.sender]
+    ], sign())
   }, { quoted: m })
 }
 

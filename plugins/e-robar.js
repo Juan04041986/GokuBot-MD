@@ -1,6 +1,6 @@
 import {
   MS, currency, fmt, panel, sign, pick, randInt, chance, cooldown, human,
-  getUser, waitPanel, isGroupEnabled, disabledPanel, targetJid, countItem, useItem, addMoney
+  getUser, waitPanel, isGroupEnabled, disabledPanel, targetJid, countItem, useItem, addMoney, displayName
 } from '../lib/economia.js'
 
 let handler = async (m, { conn, usedPrefix, command, args }) => {
@@ -54,6 +54,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
     addMoney(u, -300)
     return conn.sendMessage(m.chat, {
       text: panel('🛡️ ROBO FALLIDO', [
+        `🕶️ *Ladrón:* ${displayName(m, conn)}`,
         `👤 *Objetivo:* @${victimNum}`,
         '',
         '🛡️ Tenía un *Escudo de Ki* y bloqueó tu robo.',
@@ -74,6 +75,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
     addMoney(u, stolen)
     return conn.sendMessage(m.chat, {
       text: panel('🕶️ ROBO EXITOSO', [
+        `🕶️ *Ladrón:* ${displayName(m, conn)}`,
         `👤 *Víctima:* @${victimNum}`,
         '',
         pick([
@@ -96,6 +98,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
   addMoney(v, fine)
   return conn.sendMessage(m.chat, {
     text: panel('🚨 ROBO FALLIDO', [
+      `🕶️ *Ladrón:* ${displayName(m, conn)}`,
       `👤 *Víctima:* @${victimNum}`,
       '',
       pick([

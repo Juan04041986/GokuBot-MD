@@ -1,5 +1,5 @@
 import {
-  currency, fmt, panel, sign, parseAmount, getUser, isGroupEnabled, disabledPanel, addMoney
+  currency, fmt, panel, sign, parseAmount, getUser, isGroupEnabled, disabledPanel, addMoney, displayName
 } from '../lib/economia.js'
 
 const SYMBOLS = ['🍒', '🍋', '🍇', '🔔', '⭐', '7️⃣', '💎']
@@ -77,7 +77,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
   addMoney(u, profit)
 
   const text = panel('🎰 TRAGAPERRAS', [
-    `👤 *Usuario:* @${String(m.sender).split('@')[0]}`,
+    `👤 *Usuario:* ${displayName(m, conn)}`,
     line,
     '',
     result,
@@ -92,7 +92,7 @@ let handler = async (m, { conn, usedPrefix, command, args }) => {
   try {
     await conn.sendMessage(m.chat, { text, edit: sent.key })
   } catch {
-    await conn.sendMessage(m.chat, { text, mentions: [m.sender] }, { quoted: m })
+    await conn.sendMessage(m.chat, { text }, { quoted: m })
   }
 }
 
