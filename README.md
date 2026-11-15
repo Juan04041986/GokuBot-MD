@@ -18,9 +18,9 @@
 </p>
 
 <a
-href="https://whatsapp.com/channel/0029VaSZsS14Y9iiiiilhQYCFvO0w" target="white"><img src="https://img.shields.io/badge/Canal- oficial del bot-000000?style=for-the-badge&logo=whatsapp&logoColor=black" /></a>
-<a href="[[https://chat.whatsapp.com/LBV1BoiiiiuJqL0ICIRogyq6IT](https://chat.whatsapp.com/BR4uITM6xeR8GAd8b2VXN6)](https://chat.whatsapp.com/BR4uITM6xeR8GAd8b2VXN6)" target="white"><img src="https://img.shields.io/badge/Grupo-OfiCIAL DEL BOT-000000?style=for-the-badge&logo=whatsapp&logoColor=black" /></a>
-<a href="https://chat.whatsapp.com/BR4uITM6xeR8GAd8b2VXN6" target="blank"><img src="https://img.shields.io/badge/grupo- de soporté-000000?style=for-the-badge&logo=whatsapp&logoColor=white" /></a>
+href="https://whatsapp.com/channel/0029VaSZsS14Y9lhQYCFvO0w" target="white"><img src="https://img.shields.io/badge/Canal- oficial del bot-000000?style=for-the-badge&logo=whatsapp&logoColor=black" /></a>
+<a href="[[[https://chat.whatsapp.com/LBV1BoiiiiuJqL0ICIRogyq6IT]([https://whatsapp.com/channel/0029VaSZsS14Y9lhQYCFvO0w](https://whatsapp.com/channel/0029VaSZsS14Y9lhQYCFvO0w))]([https://chat.whatsapp.com/BR4uITM6xeR8GAd8b2VXN6](https://whatsapp.com/channel/0029VaSZsS14Y9lhQYCFvO0w))](https://chat.whatsapp.com/BR4uITM6xeR8GAd8b2VXN6)" target="white"><img src="https://img.shields.io/badge/Grupo-OfiCIAL DEL BOT-000000?style=for-the-badge&logo=whatsapp&logoColor=black" /></a>
+<a href="https://chat.whatsapp.com/BR4uITM6xeR8GAd8iiiiib2VXN6" target="blank"><img src="https://img.shields.io/badge/grupo- de soporté-000000?style=for-the-badge&logo=whatsapp&logoColor=white" /></a>
 
 
 
