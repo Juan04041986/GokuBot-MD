@@ -10,7 +10,7 @@ termux-setup-storage
 apt update && apt upgrade && pkg install -y git nodejs ffmpeg imagemagick yarn
 ```
 ```bash
-git clone https://github.com/ByJuan1986/GokuBot-MD && cd GokuBot-MD
+git clone https://github.com/Juan04041986/GokuBot-MD && cd GokuBot-MD
 ```
 ```bash
 yarn install && npm install
@@ -26,7 +26,7 @@ npm start
 > Copia uno por uno estos comandos para instalarlo.
 
 ```bash
-git clone https://github.com/ByJuan1986/GokuBot-MD && cd GokuBot-MD
+git clone https://github.com/Juan04041986/GokuBot-MD && cd GokuBot-MD
 ```
 ```bash
 yarn install && npm install
