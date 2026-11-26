@@ -9,11 +9,7 @@ export async function before(m, { conn, isAdmin, isBotAdmin }) {
 
   if (m.text && igRegex.test(m.text)) {
     try {
-      await conn.sendMessage(m.chat, {
-        delete: m.fromMe
-          ? { remoteJid: m.chat, fromMe: true, id: m.key.id }
-          : { remoteJid: m.chat, fromMe: false, id: m.key.id, participant: m.key.participant || m.sender }
-      })
+      await conn.sendMessage(m.chat, { delete: m.key })
     } catch (e) {
       console.log('Error al eliminar mensaje:', e)
     }
