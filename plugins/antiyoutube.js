@@ -2,7 +2,6 @@ const ytRegex = /(youtube\.com|youtu\.be|m\.youtube\.com|youtube-nocookie\.com)/
 
 export async function before(m, { conn, isAdmin, isBotAdmin }) {
   if (!m.isGroup) return
-  if (isAdmin) return // los admins sí pueden mandar links de YouTube
   if (!isBotAdmin) return
 
   let chat = global.db.data.chats[m.chat]

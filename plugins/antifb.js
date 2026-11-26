@@ -2,7 +2,6 @@ const fbRegex = /(facebook\.com|fb\.com|fb\.watch|fb\.gg|m\.facebook\.com)/i
 
 export async function before(m, { conn, isAdmin, isBotAdmin }) {
   if (!m.isGroup) return
-  if (isAdmin) return // los admins sí pueden mandar fb
   if (!isBotAdmin) return
 
   let chat = global.db.data.chats[m.chat]

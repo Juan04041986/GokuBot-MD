@@ -2,7 +2,6 @@ const ttRegex = /(tiktok\.com|vm\.tiktok\.com|vt\.tiktok\.com|m\.tiktok\.com|www
 
 export async function before(m, { conn, isAdmin, isBotAdmin }) {
   if (!m.isGroup) return
-  if (isAdmin) return // los admins sí pueden mandar links de TikTok
   if (!isBotAdmin) return
 
   let chat = global.db.data.chats[m.chat]
