@@ -41,6 +41,7 @@ ${readMore}
 ⧡ *${usedPrefix}on/off* antifb
 ⧡ *${usedPrefix}on/off* antiinstagram
 ⧡ *${usedPrefix}on/off* antiyoutube
+⧡ *${usedPrefix}on/off* antitiktok
 ⧡ *${usedPrefix}on/off* owners
 
 > ${textbot}`
@@ -337,6 +338,17 @@ throw false
 }
 }
 chat.antiyoutube = isEnable
+break
+
+case 'antitiktok':
+case 'antitt':
+if (m.isGroup) {
+if (!(isAdmin || isOwner)) {
+global.dfail('admin', m, conn)
+throw false
+}
+}
+chat.antitiktok = isEnable
 break
 
 default:
