@@ -1,0 +1,18 @@
+const ytRegex = /(youtube\.com|youtu\.be|m\.youtube\.com|youtube-nocookie\.com)/i
+
+export async function before(m, { conn, isAdmin, isBotAdmin }) {
+  if (!m.isGroup) return
+  if (isAdmin) return // los admins sí pueden mandar links de YouTube
+  if (!isBotAdmin) return
+
+  let chat = global.db.data.chats[m.chat]
+  if (!chat.antiyoutube) return // tienes que activarlo con .on antiyoutube
+
+  if (m.text && ytRegex.test(m.text)) {
+    await conn.sendMessage(m.chat, { delete: m.key })
+    return conn.sendMessage(m.chat, { 
+      text: `🚫 @${m.sender.split('@')[0]} No se permiten links de YouTube en este grupo.`, 
+      mentions: [m.sender] 
+    })
+  }
+}

@@ -38,6 +38,9 @@ ${readMore}
 ⧡ *${usedPrefix}on/off* logos
 ⧡ *${usedPrefix}on/off* random
 ⧡ *${usedPrefix}on/off* react
+⧡ *${usedPrefix}on/off* antifb
+⧡ *${usedPrefix}on/off* antiinstagram
+⧡ *${usedPrefix}on/off* antiyoutube
 ⧡ *${usedPrefix}on/off* owners
 
 > ${textbot}`
@@ -301,6 +304,39 @@ throw false
 }
 }
 chat.fGrupos = isEnable
+break
+
+case 'antifb':
+case 'antifacebook':
+if (m.isGroup) {
+if (!(isAdmin || isOwner)) {
+global.dfail('admin', m, conn)
+throw false
+}
+}
+chat.antifb = isEnable
+break
+
+case 'antiinstagram':
+case 'antiig':
+if (m.isGroup) {
+if (!(isAdmin || isOwner)) {
+global.dfail('admin', m, conn)
+throw false
+}
+}
+chat.antiinstagram = isEnable
+break
+
+case 'antiyoutube':
+case 'antiyt':
+if (m.isGroup) {
+if (!(isAdmin || isOwner)) {
+global.dfail('admin', m, conn)
+throw false
+}
+}
+chat.antiyoutube = isEnable
 break
 
 default:
