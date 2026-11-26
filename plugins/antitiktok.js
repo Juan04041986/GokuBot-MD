@@ -15,7 +15,14 @@ export async function before(m, { conn, isAdmin, isBotAdmin }) {
   ].filter(Boolean).join(' ')
 
   if (text && ttRegex.test(text)) {
-    await conn.sendMessage(m.chat, { delete: m.key })
+    await conn.sendMessage(m.chat, {
+      delete: {
+        remoteJid: m.chat,
+        fromMe: m.fromMe,
+        id: m.key.id,
+        participant: m.sender
+      }
+    })
     return conn.sendMessage(m.chat, { 
       text: `🚫 @${m.sender.split('@')[0]} No se permiten links de TikTok en este grupo.`, 
       mentions: [m.sender] 
